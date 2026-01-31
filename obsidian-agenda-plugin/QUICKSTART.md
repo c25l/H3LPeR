@@ -31,7 +31,7 @@ Get started with the Calendar Agenda plugin in 5 minutes!
 1. Go to "APIs & Services" → "Credentials"
 2. Click "Create Credentials" → "OAuth client ID"
 3. Choose "Web application"
-4. Under "Authorized redirect URIs", add: `https://localhost`
+4. Under "Authorized redirect URIs", add: `http://localhost`
 5. Click "Create" and copy your **Client ID**
 
 ### Step 3: Configure Plugin

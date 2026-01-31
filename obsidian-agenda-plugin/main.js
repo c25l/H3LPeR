@@ -97,10 +97,10 @@ function buildAgendaMarkdown(events) {
 // main.ts
 var DEFAULT_SETTINGS = {
   googleClientId: "",
-  googleApiKey: "",
   accessToken: "",
   tokenExpiry: 0
 };
+var TOKEN_EXPIRY_DURATION_MS = 3600 * 1e3;
 var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
   async onload() {
     await this.loadSettings();
@@ -135,7 +135,7 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
       new import_obsidian.Notice("Please configure Google Client ID in settings");
       return;
     }
-    const redirectUri = "https://localhost";
+    const redirectUri = "http://localhost";
     const scope = "https://www.googleapis.com/auth/calendar.readonly";
     const state = Math.random().toString(36).substring(7);
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(this.settings.googleClientId)}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=${encodeURIComponent(scope)}&state=${state}`;
@@ -221,7 +221,7 @@ var CalendarAgendaSettingTab = class extends import_obsidian.PluginSettingTab {
     steps.createEl("li", { text: "Go to Google Cloud Console" });
     steps.createEl("li", { text: "Create a project and enable Google Calendar API" });
     steps.createEl("li", { text: "Create OAuth 2.0 credentials (Web application)" });
-    steps.createEl("li", { text: "Add https://localhost as authorized redirect URI" });
+    steps.createEl("li", { text: "Add http://localhost as authorized redirect URI" });
     steps.createEl("li", { text: "Copy Client ID below" });
     new import_obsidian.Setting(containerEl).setName("Google Client ID").setDesc("OAuth 2.0 Client ID from Google Cloud Console").addText((text) => text.setPlaceholder("Enter your client ID").setValue(this.plugin.settings.googleClientId).onChange(async (value) => {
       this.plugin.settings.googleClientId = value;
@@ -241,9 +241,9 @@ var CalendarAgendaSettingTab = class extends import_obsidian.PluginSettingTab {
     }));
     new import_obsidian.Setting(containerEl).setName("Access Token (from OAuth redirect)").setDesc("After authenticating, paste the access_token from the redirect URL").addText((text) => {
       text.setPlaceholder("Paste access token here").setValue("").onChange(async (value) => {
-        if (value && value.length > 20) {
+        if (value && value.length > 100) {
           this.plugin.settings.accessToken = value;
-          this.plugin.settings.tokenExpiry = Date.now() + 3600 * 1e3;
+          this.plugin.settings.tokenExpiry = Date.now() + TOKEN_EXPIRY_DURATION_MS;
           await this.plugin.saveSettings();
           new import_obsidian.Notice("Access token saved!");
           this.display();

@@ -44,7 +44,7 @@ Before using the plugin, you need to set up Google Calendar API access:
    - Go to "APIs & Services" → "Credentials"
    - Click "Create Credentials" → "OAuth client ID"
    - Choose "Web application"
-   - Under "Authorized redirect URIs", add: `https://localhost`
+   - Under "Authorized redirect URIs", add: `http://localhost`
    - Click "Create"
    - Copy your **Client ID**
 

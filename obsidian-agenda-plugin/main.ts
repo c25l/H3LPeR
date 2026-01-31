@@ -3,17 +3,18 @@ import { filterAgendaEventsFromCalendar, buildAgendaMarkdown, CalendarEvent } fr
 
 interface CalendarAgendaSettings {
 	googleClientId: string;
-	googleApiKey: string;
 	accessToken: string;
 	tokenExpiry: number;
 }
 
 const DEFAULT_SETTINGS: CalendarAgendaSettings = {
 	googleClientId: '',
-	googleApiKey: '',
 	accessToken: '',
 	tokenExpiry: 0
 }
+
+// Access tokens from Google OAuth typically expire in 1 hour
+const TOKEN_EXPIRY_DURATION_MS = 3600 * 1000;
 
 export default class CalendarAgendaPlugin extends Plugin {
 	settings: CalendarAgendaSettings;
@@ -62,7 +63,9 @@ export default class CalendarAgendaPlugin extends Plugin {
 			return;
 		}
 
-		const redirectUri = 'https://localhost';
+		// Using http://localhost (not https) as Google requires specific redirect URIs
+		// This must match the redirect URI configured in Google Cloud Console
+		const redirectUri = 'http://localhost';
 		const scope = 'https://www.googleapis.com/auth/calendar.readonly';
 		const state = Math.random().toString(36).substring(7);
 
@@ -180,7 +183,7 @@ class CalendarAgendaSettingTab extends PluginSettingTab {
 		steps.createEl('li', {text: 'Go to Google Cloud Console'});
 		steps.createEl('li', {text: 'Create a project and enable Google Calendar API'});
 		steps.createEl('li', {text: 'Create OAuth 2.0 credentials (Web application)'});
-		steps.createEl('li', {text: 'Add https://localhost as authorized redirect URI'});
+		steps.createEl('li', {text: 'Add http://localhost as authorized redirect URI'});
 		steps.createEl('li', {text: 'Copy Client ID below'});
 
 		// Google Client ID
@@ -225,10 +228,10 @@ class CalendarAgendaSettingTab extends PluginSettingTab {
 					.setPlaceholder('Paste access token here')
 					.setValue('')
 					.onChange(async (value) => {
-						if (value && value.length > 20) {
+						// Google access tokens are typically 100+ characters
+						if (value && value.length > 100) {
 							this.plugin.settings.accessToken = value;
-							// Access tokens typically expire in 1 hour
-							this.plugin.settings.tokenExpiry = Date.now() + (3600 * 1000);
+							this.plugin.settings.tokenExpiry = Date.now() + TOKEN_EXPIRY_DURATION_MS;
 							await this.plugin.saveSettings();
 							new Notice('Access token saved!');
 							this.display(); // Refresh display
