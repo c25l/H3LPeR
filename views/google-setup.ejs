@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Setup - H3LPeR</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container" style="max-width: 500px;">
+    <h1>Google Integration Setup</h1>
+
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="error-message" style="margin-bottom: 1rem;"><%= error %></div>
+    <% } %>
+
+    <% if (status.hasCredentials) { %>
+      <% if (status.authenticated) { %>
+        <div class="success-message" style="padding: 1rem; background: rgba(78, 201, 176, 0.1); border: 1px solid #4ec9b0; border-radius: 4px; color: #4ec9b0; margin-bottom: 1rem;">
+          <strong>✓ Connected</strong><br>
+          Signed in as: <%= status.user.email %>
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+          <a href="/" class="btn btn-primary">Go to App</a>
+          <button onclick="disconnect()" class="btn btn-secondary">Disconnect</button>
+        </div>
+      <% } else { %>
+        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+          Credentials are configured. Click below to connect your Google account.
+        </p>
+        <button onclick="connectGoogle()" class="btn btn-primary" style="width: 100%;">
+          Connect Google Account
+        </button>
+        <a href="/" class="btn btn-link" style="display: block; text-align: center; margin-top: 1rem;">Back to App</a>
+      <% } %>
+    <% } else { %>
+      <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+        This app needs to copy Google OAuth credentials from your H3LPeR directory.<br>
+        Credentials will be copied from: <code style="background: var(--bg-tertiary); padding: 0.2rem 0.4rem; border-radius: 3px;">../H3LPeR/credentials.json</code>
+      </p>
+
+      <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 1rem;">
+        <h3 style="margin-bottom: 0.5rem; font-size: 0.875rem;">Steps:</h3>
+        <ol style="margin-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;">
+          <li>Ensure credentials.json exists in ../H3LPeR/</li>
+          <li>Click "Copy Credentials" below</li>
+          <li>Then click "Connect Google Account"</li>
+        </ol>
+      </div>
+
+      <button onclick="copyCredentials()" id="copy-btn" class="btn btn-primary" style="width: 100%;">
+        Copy Credentials & Setup
+      </button>
+      <a href="/" class="btn btn-link" style="display: block; text-align: center; margin-top: 1rem;">Back to App</a>
+    <% } %>
+  </div>
+
+  <script>
+    async function copyCredentials() {
+      const btn = document.getElementById('copy-btn');
+      btn.disabled = true;
+      btn.textContent = 'Copying...';
+
+      try {
+        const response = await fetch('/api/auth/google/setup');
+        const result = await response.json();
+
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert('Error: ' + result.error);
+          btn.disabled = false;
+          btn.textContent = 'Copy Credentials & Setup';
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Copy Credentials & Setup';
+      }
+    }
+
+    function connectGoogle() {
+      window.location.href = '/api/auth/google/login';
+    }
+
+    async function disconnect() {
+      if (!confirm('Disconnect from Google? This will remove access to Calendar, Tasks, and Email.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/auth/google/logout');
+        if (response.ok) {
+          location.reload();
+        } else {
+          alert('Error disconnecting');
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    }
+
+    // Check for error in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    if (error && error !== 'null') {
+      alert('Authentication error: ' + decodeURIComponent(error));
+    }
+  </script>
+</body>
+</html>
