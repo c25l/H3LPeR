@@ -1,0 +1,10 @@
+{
+	"id": "calendar-agenda",
+	"name": "Calendar Agenda",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Generate daily agenda from calendar events in your journal notes.",
+	"author": "H3LPeR",
+	"authorUrl": "https://github.com/c25l/H3LPeR",
+	"isDesktopOnly": false
+}
