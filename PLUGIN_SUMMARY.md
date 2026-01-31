@@ -2,18 +2,17 @@
 
 ## Overview
 
-Successfully extracted the calendar agenda generation functionality from the H3LPeR web application and created a standalone Obsidian.md plugin.
+Successfully extracted the calendar agenda generation functionality from the H3LPeR web application and created a standalone, read-only Obsidian.md plugin.
 
 ## What Was Created
 
-A complete, working Obsidian plugin located in `obsidian-agenda-plugin/` with:
+A minimal, read-only Obsidian plugin located in `obsidian-agenda-plugin/` with:
 
 ### Core Files (Required for Plugin)
 - ✅ `manifest.json` - Plugin metadata
-- ✅ `main.js` - Compiled plugin code (16KB)
-- ✅ `main.ts` - Plugin entry point source
+- ✅ `main.js` - Compiled plugin code (5KB)
+- ✅ `main.ts` - Simple plugin entry point
 - ✅ `agenda-utils.ts` - Core agenda logic
-- ✅ `calendar-modal.ts` - Event input UI
 
 ### Build System
 - ✅ `package.json` - Dependencies and scripts
@@ -22,9 +21,9 @@ A complete, working Obsidian plugin located in `obsidian-agenda-plugin/` with:
 - ✅ `.gitignore` - Git exclusions
 
 ### Documentation
-- ✅ `README.md` - Complete usage guide (5.2KB)
-- ✅ `QUICKSTART.md` - Quick start guide (3.6KB)
-- ✅ `ARCHITECTURE.md` - Code extraction details (6.9KB)
+- ✅ `README.md` - Complete usage guide
+- ✅ `QUICKSTART.md` - Quick start guide
+- ✅ `ARCHITECTURE.md` - Code extraction details
 
 ### Examples
 - ✅ `examples/sample-events.json` - Typical workday schedule
@@ -34,15 +33,12 @@ A complete, working Obsidian plugin located in `obsidian-agenda-plugin/` with:
 
 ## Features
 
-### What It Does
-1. **Insert Agenda** - Add formatted agenda sections to notes
-2. **Manual Input** - Modal UI for adding events one-by-one
-3. **JSON Import** - Import events from clipboard or text area
-4. **Update Agenda** - Replace existing agenda sections
-5. **Create Journal** - Generate daily journal with agenda template
-6. **Smart Filtering** - Automatically removes free/tentative events
-7. **Time Formatting** - Handles all-day and timed events
-8. **Location Display** - Shows event locations in markdown
+### What It Does (Read-Only)
+1. **Display Events** - Shows formatted agenda from calendar JSON
+2. **Smart Filtering** - Automatically removes free/tentative events
+3. **Time Formatting** - Handles all-day and timed events
+4. **Location Display** - Shows event locations in markdown
+5. **One Command** - Simple clipboard import
 
 ### What It Extracted from H3LPeR
 
@@ -52,17 +48,14 @@ A complete, working Obsidian plugin located in `obsidian-agenda-plugin/` with:
 - `cleanAgendaSummary()` - Summary cleanup
 - `getAgendaAvailability()` - Availability detection
 
-**From `server/services/journal.js`:**
-- Journal folder configuration concept
-- Date formatting logic
-- Agenda section insertion/replacement
-- Journal entry template generation
-
 **What Was NOT Included:**
-- Google OAuth authentication (server-side)
-- Calendar API integration (requires backend)
-- Database/caching layer
-- Express.js server components
+- ❌ Manual event input UI
+- ❌ Google OAuth authentication
+- ❌ Calendar API integration
+- ❌ Agenda updating features
+- ❌ Journal creation features
+- ❌ Settings and configuration
+- ❌ Any write operations
 
 ## Installation
 
@@ -75,16 +68,13 @@ A complete, working Obsidian plugin located in `obsidian-agenda-plugin/` with:
 ```bash
 cd obsidian-agenda-plugin
 npm install
-npm run build
+npm run build  # or: node esbuild.config.mjs production
 ```
 
 ## Usage
 
-### Commands Added to Obsidian
-1. **Insert agenda from manual input** - Opens modal for event entry
-2. **Insert agenda from clipboard (JSON)** - Parses JSON from clipboard
-3. **Update agenda in current note** - Replaces agenda section
-4. **Create today's journal with agenda** - Creates daily note
+### Single Command
+**Insert agenda from clipboard (JSON)** - Displays calendar events from JSON in clipboard
 
 ### Example Workflow
 1. Copy events JSON to clipboard:
@@ -99,7 +89,7 @@ npm run build
 ]
 ```
 
-2. Run command: "Insert agenda from clipboard"
+2. Run command: "Insert agenda from clipboard (JSON)"
 
 3. Result in note:
 ```markdown
@@ -114,7 +104,7 @@ npm run build
 ### Build Test
 - ✅ TypeScript compilation successful
 - ✅ esbuild bundling successful
-- ✅ Output: `main.js` (16KB)
+- ✅ Output: `main.js` (5KB)
 
 ### Code Review
 - ✅ No issues found
@@ -126,13 +116,28 @@ npm run build
 ## File Statistics
 
 ```
-Total files: 18
-Source files: 3 TypeScript files
-Build output: 1 JavaScript file (main.js)
+Total files: 14 (reduced from 18)
+Source files: 2 TypeScript files (reduced from 3)
+Build output: 1 JavaScript file (main.js, 5KB)
 Documentation: 4 Markdown files
 Examples: 4 files (3 JSON + 1 README)
 Config files: 5 files
 ```
+
+## Plugin Philosophy
+
+**Read-Only & Minimal:**
+- Only displays calendar events
+- No creation, editing, or deletion
+- Single command interface
+- Zero configuration
+- 5KB bundle size
+
+**Works With Any Calendar:**
+- Export events to JSON from any source
+- No proprietary integrations
+- Privacy-focused (no OAuth)
+- Flexible automation options
 
 ## Next Steps for Users
 
@@ -140,39 +145,37 @@ Config files: 5 files
    - Use files in `examples/` directory
    - Test different event types
 
-2. **Set Up Automation**
-   - Export events from your calendar to JSON
-   - Create scripts to automate the process
-   - Integrate with calendar APIs
+2. **Set Up Export Script**
+   - Create script to export calendar to JSON
+   - Copy to clipboard automatically
+   - Run via hotkey or scheduler
 
-3. **Customize Settings**
-   - Configure journal folder location
-   - Adjust date format to match your system
-
-4. **Extend Functionality**
-   - Fork and add Google Calendar API support
-   - Add iCal/ICS file import
-   - Integrate with other Obsidian plugins
+3. **Integrate With Workflow**
+   - Add to daily note routine
+   - Use with meeting notes
+   - Combine with other plugins
 
 ## Technical Details
 
 **Language:** TypeScript
 **Target:** Obsidian API (0.15.0+)
-**Bundle Size:** 16KB
+**Bundle Size:** 5KB (reduced from 16KB)
 **Dependencies:** obsidian (peer dependency)
 **Build Tool:** esbuild
 **Module Format:** CommonJS
+**Commands:** 1 (reduced from 4)
 
 ## Success Criteria
 
-✅ Extracted core agenda logic from H3LPeR
-✅ Created working Obsidian plugin structure
+✅ Extracted core agenda display logic from H3LPeR
+✅ Created minimal read-only plugin
 ✅ Maintained code quality and functionality
 ✅ Added comprehensive documentation
 ✅ Included practical examples
 ✅ Built and tested successfully
 ✅ No security vulnerabilities
 ✅ Ready for distribution
+✅ Simplified to single purpose (display only)
 
 ## Credits
 

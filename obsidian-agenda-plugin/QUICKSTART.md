@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get started with the Calendar Agenda plugin in 5 minutes!
+Get started with the Calendar Agenda plugin in 2 minutes!
 
 ## Installation
 
@@ -20,13 +20,7 @@ Get started with the Calendar Agenda plugin in 5 minutes!
 
 ## First Steps
 
-### 1. Configure Settings (Optional)
-
-Open Settings → Plugin Options → Calendar Agenda:
-- Set your **Journal folder** (default: "Journal")
-- Set your **Date format** (default: "YYYY-MM-DD")
-
-### 2. Try the Plugin with Sample Events
+### Try the Plugin with Sample Events
 
 We've included sample event files for testing!
 
@@ -49,42 +43,23 @@ We've included sample event files for testing!
 
 ```
 
-### 3. Create Your First Journal Entry
-
-1. Open Command Palette (Ctrl/Cmd + P)
-2. Run: "Create today's journal with agenda"
-3. A new daily note will be created with an agenda template
-4. Use the other commands to add events to your agenda
-
 ## Daily Workflow
 
-### Option A: Manual Entry
-1. Open today's journal note
-2. Command: "Insert agenda from manual input"
-3. Fill in event details in the modal
-4. Add multiple events if needed
-5. Click "Insert All Events"
-
-### Option B: From Calendar Export
+### Get Events from Your Calendar
 1. Export your day's events from Google Calendar/Outlook as JSON
 2. Copy the JSON to clipboard
-3. Open today's journal note
+3. Open your note in Obsidian
 4. Command: "Insert agenda from clipboard (JSON)"
 5. Done!
-
-### Option C: Import from Modal
-1. Open today's journal note
-2. Command: "Insert agenda from manual input"
-3. Paste your JSON in the text area
-4. Click "Import Events"
 
 ## Common Use Cases
 
 ### Use Case 1: Daily Planning
 Create a routine:
-1. Morning: Create today's journal
-2. Import calendar events
-3. Add notes and reflections throughout the day
+1. Morning: Export calendar events to JSON
+2. Copy to clipboard
+3. Insert into your daily note
+4. Add notes and reflections throughout the day
 
 ### Use Case 2: Meeting Notes
 1. Insert today's agenda in a meeting notes page
@@ -93,23 +68,21 @@ Create a routine:
 
 ### Use Case 3: Weekly Review
 1. Create a weekly note
-2. Import all week's events
+2. Export and insert all week's events
 3. Review and plan
 
 ## Tips & Tricks
 
-1. **Keyboard Shortcuts**: Set up custom hotkeys for frequently used commands in Settings → Hotkeys
+1. **Keyboard Shortcuts**: Set up a custom hotkey for the insert command in Settings → Hotkeys
 
 2. **Event Filtering**: The plugin automatically filters out:
    - Free/blocked time
    - Tentative events
    Try `examples/filtered-events.json` to see this in action!
 
-3. **Update Existing Agendas**: Use "Update agenda in current note" to replace an existing agenda section
+3. **Multiple Imports**: You can run the insert command multiple times to add more events
 
-4. **Multiple Imports**: You can run insert commands multiple times to add more events
-
-5. **Date Formats**: Change the date format in settings to match your preferred journal naming convention
+4. **Calendar Export Scripts**: Create scripts that automatically export your calendar to JSON and copy to clipboard
 
 ## Need Help?
 

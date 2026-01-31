@@ -1,16 +1,14 @@
 # Calendar Agenda Plugin for Obsidian
 
-Generate daily agenda sections from calendar events in your Obsidian journal notes.
+Display calendar events in markdown format in your Obsidian notes (read-only).
 
 ## Features
 
-- 📅 Insert agenda sections with calendar events in markdown format
-- 🔄 Update existing agenda sections in notes
-- 📝 Create daily journal entries with agenda templates
+- 📅 Display calendar events in clean markdown format
 - 🎯 Smart filtering of events (removes free/tentative events)
 - 🕒 Automatic time formatting
 - 📍 Location display support
-- 🔧 Configurable journal folder and date format
+- 📋 Simple clipboard JSON import
 
 ## Installation
 
@@ -52,36 +50,18 @@ Generate daily agenda sections from calendar events in your Obsidian journal not
 
 ## Usage
 
-### Commands
+### Command
 
-The plugin provides the following commands (accessible via Command Palette with `Ctrl/Cmd + P`):
+The plugin provides one simple command (accessible via Command Palette with `Ctrl/Cmd + P`):
 
-1. **Insert agenda from manual input** - Opens a modal to manually add events
-2. **Insert agenda from clipboard (JSON)** - Parses JSON events from clipboard
-3. **Update agenda in current note** - Replaces the agenda section in the current note
-4. **Create today's journal with agenda** - Creates a new daily journal entry
+**Insert agenda from clipboard (JSON)** - Displays calendar events from JSON in clipboard
 
-### Event Input Methods
-
-#### Method 1: Manual Input
-
-1. Open Command Palette (`Ctrl/Cmd + P`)
-2. Run "Insert agenda from manual input"
-3. Fill in event details in the modal
-4. Click "Add Event" to add more events
-5. Click "Insert All Events" when done
-
-#### Method 2: JSON from Clipboard
+### Usage
 
 1. Copy event data as JSON to your clipboard (see format below)
-2. Open Command Palette
+2. Open Command Palette (`Ctrl/Cmd + P`)
 3. Run "Insert agenda from clipboard (JSON)"
-
-#### Method 3: JSON Import in Modal
-
-1. Open "Insert agenda from manual input" command
-2. Paste JSON in the text area
-3. Click "Import Events"
+4. The formatted agenda will be inserted at your cursor
 
 ### JSON Format
 
@@ -127,10 +107,7 @@ The plugin generates markdown in this format:
 
 ### Settings
 
-Configure the plugin in Settings → Plugin Options → Calendar Agenda:
-
-- **Journal folder**: Folder where journal entries are stored (default: "Journal")
-- **Date format**: Format for journal filenames using YYYY, MM, DD (default: "YYYY-MM-DD")
+This plugin has no settings - it's designed to be simple and read-only.
 
 ## Integration with Calendar Services
 
@@ -153,18 +130,18 @@ To get events from Google Calendar:
 
 You can automate event import by:
 
-1. Creating a script that fetches calendar events and copies them to clipboard
-2. Using other Obsidian plugins for calendar sync
-3. Setting up a scheduled task that exports events to a file you can import
+1. Creating a script that fetches calendar events and copies them to clipboard as JSON
+2. Using other Obsidian plugins for calendar sync that can output JSON
+3. Setting up shortcuts or hotkeys to run calendar export scripts
 
 ## Features from H3LPeR
 
-This plugin extracts the agenda generation functionality from the H3LPeR project, including:
+This plugin extracts the core agenda display functionality from the H3LPeR project:
 
 - Smart event filtering (removes free/tentative events)
 - Duplicate meeting detection
 - Clean summary formatting
-- Flexible agenda section insertion/updating
+- Read-only display of calendar events
 
 ## Development
 

@@ -27,7 +27,7 @@ __export(main_exports, {
   default: () => CalendarAgendaPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian2 = require("obsidian");
+var import_obsidian = require("obsidian");
 
 // agenda-utils.ts
 function filterAgendaEventsFromCalendar(events) {
@@ -93,128 +93,10 @@ function buildAgendaMarkdown(events) {
   lines.push("");
   return lines.join("\n");
 }
-function upsertAgendaInContent(content, agendaSection) {
-  if (!agendaSection) {
-    return content;
-  }
-  const agendaRegex = /^## Agenda\s*\n[\s\S]*?(?=^##\s|\Z)/m;
-  if (agendaRegex.test(content)) {
-    return content.replace(agendaRegex, agendaSection.trimEnd() + "\n\n");
-  }
-  const headingMatch = content.match(/^# .*(?:\n+|\n\r+|\r+|\r\n+)/m);
-  if (headingMatch && headingMatch.index !== void 0) {
-    const insertAt = headingMatch.index + headingMatch[0].length;
-    return content.slice(0, insertAt) + agendaSection + content.slice(insertAt);
-  }
-  return agendaSection + content;
-}
-
-// calendar-modal.ts
-var import_obsidian = require("obsidian");
-var CalendarEventModal = class extends import_obsidian.Modal {
-  constructor(app, onSubmit) {
-    super(app);
-    this.events = [];
-    this.onSubmit = onSubmit;
-  }
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.createEl("h2", { text: "Add Calendar Events" });
-    contentEl.createEl("p", {
-      text: "Paste calendar events in JSON format or use the form below to add events one at a time."
-    });
-    const jsonContainer = contentEl.createDiv();
-    new import_obsidian.Setting(jsonContainer).setName("Import from JSON").setDesc("Paste events as JSON array").addTextArea((text) => {
-      text.inputEl.rows = 10;
-      text.inputEl.style.width = "100%";
-      text.inputEl.style.fontFamily = "monospace";
-      text.setPlaceholder(`[
-  {
-    "summary": "Team Meeting",
-    "start": "2024-01-31T10:00:00",
-    "end": "2024-01-31T11:00:00",
-    "location": "Conference Room A"
-  }
-]`);
-      return text;
-    });
-    new import_obsidian.Setting(contentEl).addButton((btn) => btn.setButtonText("Import Events").setCta().onClick(() => {
-      try {
-        const textarea = jsonContainer.querySelector("textarea");
-        if (textarea && textarea.value) {
-          const parsed = JSON.parse(textarea.value);
-          if (Array.isArray(parsed)) {
-            this.events = parsed;
-            this.onSubmit(this.events);
-            this.close();
-          } else {
-            throw new Error("Input must be an array of events");
-          }
-        }
-      } catch (error) {
-        console.error("Failed to parse events:", error);
-        alert("Failed to parse JSON. Please check the format.");
-      }
-    }));
-    contentEl.createEl("hr");
-    contentEl.createEl("h3", { text: "Or add events manually:" });
-    const formData = {
-      summary: "",
-      start: "",
-      end: "",
-      location: "",
-      allDay: false
-    };
-    new import_obsidian.Setting(contentEl).setName("Event Title").addText((text) => text.setPlaceholder("Team Meeting").onChange((value) => formData.summary = value));
-    new import_obsidian.Setting(contentEl).setName("Start Time").setDesc("Format: YYYY-MM-DDTHH:MM:SS or YYYY-MM-DD for all-day").addText((text) => text.setPlaceholder("2024-01-31T10:00:00").onChange((value) => formData.start = value));
-    new import_obsidian.Setting(contentEl).setName("End Time").setDesc("Format: YYYY-MM-DDTHH:MM:SS or YYYY-MM-DD for all-day").addText((text) => text.setPlaceholder("2024-01-31T11:00:00").onChange((value) => formData.end = value));
-    new import_obsidian.Setting(contentEl).setName("Location").addText((text) => text.setPlaceholder("Conference Room A").onChange((value) => formData.location = value));
-    new import_obsidian.Setting(contentEl).setName("All Day Event").addToggle((toggle) => toggle.onChange((value) => formData.allDay = value));
-    new import_obsidian.Setting(contentEl).addButton((btn) => btn.setButtonText("Add Event").setCta().onClick(() => {
-      if (formData.summary && formData.start) {
-        this.events.push({ ...formData });
-        formData.summary = "";
-        formData.start = "";
-        formData.end = "";
-        formData.location = "";
-        formData.allDay = false;
-        alert(`Added "${formData.summary}". Add more or close to insert.`);
-      } else {
-        alert("Please provide at least a title and start time");
-      }
-    })).addButton((btn) => btn.setButtonText("Insert All Events").onClick(() => {
-      if (this.events.length > 0) {
-        this.onSubmit(this.events);
-        this.close();
-      } else {
-        alert("No events to insert");
-      }
-    }));
-  }
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
-  }
-};
 
 // main.ts
-var DEFAULT_SETTINGS = {
-  journalFolder: "Journal",
-  dateFormat: "YYYY-MM-DD"
-};
-var CalendarAgendaPlugin = class extends import_obsidian2.Plugin {
+var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
   async onload() {
-    await this.loadSettings();
-    this.addCommand({
-      id: "insert-agenda-manual",
-      name: "Insert agenda from manual input",
-      editorCallback: (editor, view) => {
-        new CalendarEventModal(this.app, (events) => {
-          this.insertAgenda(editor, events);
-        }).open();
-      }
-    });
     this.addCommand({
       id: "insert-agenda-clipboard",
       name: "Insert agenda from clipboard (JSON)",
@@ -223,179 +105,30 @@ var CalendarAgendaPlugin = class extends import_obsidian2.Plugin {
           const clipboardText = await navigator.clipboard.readText();
           const events = JSON.parse(clipboardText);
           if (!Array.isArray(events)) {
-            new import_obsidian2.Notice("Clipboard content must be a JSON array of events");
+            new import_obsidian.Notice("Clipboard content must be a JSON array of events");
             return;
           }
           this.insertAgenda(editor, events);
         } catch (error) {
           console.error("Failed to parse clipboard:", error);
-          new import_obsidian2.Notice("Failed to parse clipboard content as JSON");
+          new import_obsidian.Notice("Failed to parse clipboard content as JSON");
         }
       }
     });
-    this.addCommand({
-      id: "update-agenda-manual",
-      name: "Update agenda in current note",
-      editorCallback: (editor, view) => {
-        new CalendarEventModal(this.app, (events) => {
-          this.updateAgenda(editor, events);
-        }).open();
-      }
-    });
-    this.addCommand({
-      id: "create-journal-with-agenda",
-      name: "Create today's journal with agenda",
-      callback: async () => {
-        await this.createTodayJournal();
-      }
-    });
-    this.addSettingTab(new CalendarAgendaSettingTab(this.app, this));
   }
   onunload() {
   }
-  async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-  }
-  async saveSettings() {
-    await this.saveData(this.settings);
-  }
   /**
-   * Insert agenda at cursor position
+   * Insert agenda at cursor position (read-only display)
    */
   insertAgenda(editor, events) {
     const agendaEvents = filterAgendaEventsFromCalendar(events);
     if (agendaEvents.length === 0) {
-      new import_obsidian2.Notice("No events to add to agenda");
+      new import_obsidian.Notice("No events to display");
       return;
     }
     const agendaText = buildAgendaMarkdown(agendaEvents);
     editor.replaceSelection(agendaText);
-    new import_obsidian2.Notice(`Added ${agendaEvents.length} event(s) to agenda`);
-  }
-  /**
-   * Update agenda in the entire document
-   */
-  updateAgenda(editor, events) {
-    const agendaEvents = filterAgendaEventsFromCalendar(events);
-    if (agendaEvents.length === 0) {
-      new import_obsidian2.Notice("No events to add to agenda");
-      return;
-    }
-    const agendaSection = buildAgendaMarkdown(agendaEvents);
-    const currentContent = editor.getValue();
-    const updatedContent = upsertAgendaInContent(currentContent, agendaSection);
-    editor.setValue(updatedContent);
-    new import_obsidian2.Notice(`Updated agenda with ${agendaEvents.length} event(s)`);
-  }
-  /**
-   * Format date according to settings
-   */
-  formatDate(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return this.settings.dateFormat.replace("YYYY", String(year)).replace("MM", month).replace("DD", day);
-  }
-  /**
-   * Get journal path for a date
-   */
-  getJournalPath(date) {
-    const filename = this.formatDate(date) + ".md";
-    return this.settings.journalFolder ? `${this.settings.journalFolder}/${filename}` : filename;
-  }
-  /**
-   * Create today's journal entry
-   */
-  async createTodayJournal() {
-    const today = new Date();
-    const journalPath = this.getJournalPath(today);
-    try {
-      const file = this.app.vault.getAbstractFileByPath(journalPath);
-      if (file) {
-        const leaf2 = this.app.workspace.getLeaf(false);
-        await leaf2.openFile(file);
-        new import_obsidian2.Notice("Journal entry already exists. Opened existing file.");
-        return;
-      }
-      const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
-      const formatted = today.toLocaleDateString("en-US", options);
-      const template = `# ${formatted}
-
-## Agenda
-
-(Use "Insert agenda from manual input" or "Insert agenda from clipboard" command to add events)
-
-## Notes
-
-`;
-      const folderPath = this.settings.journalFolder;
-      if (folderPath) {
-        const folder = this.app.vault.getAbstractFileByPath(folderPath);
-        if (!folder) {
-          await this.app.vault.createFolder(folderPath);
-        }
-      }
-      const newFile = await this.app.vault.create(journalPath, template);
-      const leaf = this.app.workspace.getLeaf(false);
-      await leaf.openFile(newFile);
-      new import_obsidian2.Notice("Created today's journal entry");
-    } catch (error) {
-      console.error("Failed to create journal:", error);
-      new import_obsidian2.Notice("Failed to create journal entry");
-    }
-  }
-};
-var CalendarAgendaSettingTab = class extends import_obsidian2.PluginSettingTab {
-  constructor(app, plugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-  display() {
-    const { containerEl } = this;
-    containerEl.empty();
-    containerEl.createEl("h2", { text: "Calendar Agenda Settings" });
-    new import_obsidian2.Setting(containerEl).setName("Journal folder").setDesc("Folder where journal entries are stored").addText((text) => text.setPlaceholder("Journal").setValue(this.plugin.settings.journalFolder).onChange(async (value) => {
-      this.plugin.settings.journalFolder = value;
-      await this.plugin.saveSettings();
-    }));
-    new import_obsidian2.Setting(containerEl).setName("Date format").setDesc("Format for journal filenames (use YYYY, MM, DD)").addText((text) => text.setPlaceholder("YYYY-MM-DD").setValue(this.plugin.settings.dateFormat).onChange(async (value) => {
-      this.plugin.settings.dateFormat = value;
-      await this.plugin.saveSettings();
-    }));
-    containerEl.createEl("h3", { text: "Usage Instructions" });
-    const instructions = containerEl.createEl("div");
-    instructions.innerHTML = `
-			<p><strong>To use this plugin:</strong></p>
-			<ol>
-				<li><strong>Manual Input:</strong> Use the "Insert agenda from manual input" command to open a modal where you can add events</li>
-				<li><strong>From Clipboard:</strong> Copy calendar events as JSON to clipboard, then use "Insert agenda from clipboard" command</li>
-				<li><strong>Update Existing:</strong> Use "Update agenda in current note" to replace the agenda section in the current note</li>
-				<li><strong>Create Journal:</strong> Use "Create today's journal with agenda" to create a new daily note</li>
-			</ol>
-			<p><strong>JSON Format Example:</strong></p>
-			<pre style="background: var(--background-primary-alt); padding: 10px; border-radius: 4px; overflow-x: auto;">
-[
-  {
-    "summary": "Team Meeting",
-    "start": "2024-01-31T10:00:00",
-    "end": "2024-01-31T11:00:00",
-    "location": "Conference Room A",
-    "allDay": false
-  },
-  {
-    "summary": "Lunch",
-    "start": "2024-01-31",
-    "end": "2024-01-31",
-    "allDay": true
-  }
-]</pre>
-			<p><strong>Integration with Calendar Apps:</strong></p>
-			<p>To get events from Google Calendar, Apple Calendar, or other services, you can:</p>
-			<ul>
-				<li>Export events to JSON format from your calendar app</li>
-				<li>Use calendar APIs to fetch events and copy them to clipboard</li>
-				<li>Use other Obsidian plugins that sync with calendar services and export the data</li>
-			</ul>
-		`;
+    new import_obsidian.Notice(`Displayed ${agendaEvents.length} event(s)`);
   }
 };

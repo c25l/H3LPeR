@@ -25,26 +25,19 @@ This document explains how the Obsidian Calendar Agenda plugin was created by ex
 - Made functions pure and reusable
 - Added TypeScript type definitions
 
-### 2. Journal Service Logic (`server/services/journal.js` → `main.ts`)
+### 2. Display Logic Only
 
-**Extracted Concepts:**
-- Journal folder configuration
-- Date formatting logic
-- Journal path generation
-- Template generation with agenda sections
-- Agenda section insertion/updating (`upsertAgendaInContent`)
+**Approach:**
+- **Read-only**: Plugin only displays events, no creation or modification
+- **Simple**: Single command to insert agenda from clipboard
+- **No settings**: Zero configuration needed
 
-**Key Features Preserved:**
-- Configurable journal folder
-- Configurable date format
-- Smart agenda insertion (after first heading)
-- Agenda section replacement when updating
-
-**Changes Made:**
-- Adapted from server-side Node.js to Obsidian Plugin API
-- Removed vault service dependency
-- Integrated with Obsidian's native file system API
-- Simplified to work client-side only
+**What Was NOT Included:**
+- Manual event input UI
+- Agenda updating/replacement functionality
+- Journal creation features
+- Settings and configuration
+- Any write operations
 
 ### 3. Calendar Integration Concepts
 
@@ -52,19 +45,20 @@ This document explains how the Obsidian Calendar Agenda plugin was created by ex
 - Google Calendar OAuth (server-side)
 - Calendar API integration (requires backend)
 - Automatic calendar fetching
+- Any calendar write operations
 
-**Alternative Approach:**
-Instead of server-side Google Calendar integration, the plugin provides:
-- Manual event input via modal UI
-- JSON import from clipboard
-- JSON import via text area
-- Support for any calendar source that can export to JSON
+**Simplified Approach:**
+Instead of complex server-side integration, the plugin provides:
+- JSON import from clipboard only
+- Read-only event display
+- Works with any calendar source that can export to JSON
 
 This makes the plugin:
+- Simpler (no complex UI or workflows)
 - More flexible (works with any calendar app)
 - Privacy-focused (no OAuth or cloud dependencies)
-- Simpler (no server required)
 - More portable (works on mobile and desktop)
+- Minimal (5KB bundle size)
 
 ## File Mapping
 
@@ -80,8 +74,7 @@ H3LPeR/
 ```
 obsidian-agenda-plugin/
 ├── agenda-utils.ts     ← Core agenda logic from public/js/agenda.js
-├── main.ts            ← Plugin entry, adapted journal logic
-├── calendar-modal.ts  ← New: UI for manual event input
+├── main.ts            ← Simple plugin entry with one command
 ├── manifest.json      ← Standard Obsidian plugin metadata
 ├── package.json       ← Build configuration
 ├── tsconfig.json      ← TypeScript configuration
@@ -112,10 +105,11 @@ private insertAgenda(editor: Editor, events: CalendarEvent[]) {
 ```
 
 **Key Differences:**
-1. No server API calls - events provided directly
+1. No server API calls - events provided directly from clipboard
 2. Uses Obsidian Editor API instead of DOM manipulation
 3. Synchronous instead of async (no fetch needed)
 4. TypeScript with interfaces for type safety
+5. Read-only - no modification features
 
 ## Design Decisions
 
@@ -128,14 +122,15 @@ private insertAgenda(editor: Editor, events: CalendarEvent[]) {
 - More flexible (works with any calendar source)
 - Mobile-friendly (Obsidian mobile doesn't support Node.js APIs)
 
-### 2. Manual/JSON Input
-**Decision:** Use manual input and JSON import instead of automatic calendar sync.
+### 2. Read-Only Design
+**Decision:** Plugin only reads and displays events, no write operations.
 
 **Rationale:**
-- Avoids complex OAuth flows in a plugin
-- Works with any calendar app (Google, Apple, Outlook, etc.)
-- Users maintain control over what's imported
-- Enables automation via external scripts
+- Simpler user experience (one command, one purpose)
+- Smaller bundle size (5KB vs 16KB+)
+- Fewer potential bugs
+- Clear separation of concerns (display only)
+- Users can use other plugins for editing/creating
 
 ### 3. Preserve Core Logic
 **Decision:** Keep the agenda filtering and formatting logic exactly as-is.
@@ -164,21 +159,21 @@ private insertAgenda(editor: Editor, events: CalendarEvent[]) {
 - ❌ Database/cache layer
 - ❌ Express.js middleware
 - ❌ Session management
+- ❌ Manual event input UI
+- ❌ Agenda updating/replacement
+- ❌ Journal creation features
+- ❌ Settings and configuration
 
 ### Added for Obsidian:
-- ✅ Manual event input modal
-- ✅ JSON clipboard import
-- ✅ Settings tab with Obsidian UI
-- ✅ Command palette integration
-- ✅ Obsidian file system integration
+- ✅ Single clipboard import command
 - ✅ TypeScript type definitions
+- ✅ Minimal plugin structure (5KB)
 
 ### Preserved from H3LPeR:
 - ✅ Event filtering logic
 - ✅ Markdown generation
 - ✅ Date formatting
-- ✅ Agenda section management
-- ✅ Journal file organization
+- ✅ Smart event handling
 
 ## Future Enhancements
 
@@ -206,6 +201,11 @@ Potential additions that could bring back some H3LPeR functionality:
 
 ## Conclusion
 
-This plugin successfully extracts the "agenda blob generation" functionality from H3LPeR while adapting it to work as a standalone Obsidian plugin. The core logic remains intact, proving valuable enough to reuse, while the integration approach has been completely redesigned to fit Obsidian's architecture and philosophy.
+This plugin successfully extracts the "agenda blob generation" functionality from H3LPeR while keeping it simple and focused. The core filtering and formatting logic remains intact, but the plugin is now:
 
-The result is a simpler, more focused tool that provides the same agenda formatting capabilities without the complexity of a full web application.
+- **Read-only**: Only displays events, no modification
+- **Minimal**: 5KB bundle, one command
+- **Flexible**: Works with any calendar that exports JSON
+- **Simple**: No configuration needed
+
+The result is a focused tool that provides clean agenda formatting without complexity.
