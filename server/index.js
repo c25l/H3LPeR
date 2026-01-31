@@ -58,6 +58,11 @@ app.use(session({
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 
+// Health check endpoint (before auth - must be unauthenticated for Azure probes)
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
 // Setup auth routes (login/logout)
 setupAuth(app, config);
 

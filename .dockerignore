@@ -1,0 +1,17 @@
+node_modules/
+.git/
+.github/
+.sessions/
+.env
+.DS_Store
+*.log
+*.pem
+vault*/
+config.json
+client_secret*
+credential*
+server/data/
+infra/
+docs/
+CLAUDE.md
+README.md

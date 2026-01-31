@@ -1,0 +1,100 @@
+name: Build and Deploy to Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+
+permissions:
+  id-token: write   # For Azure OIDC login
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Login to Azure using OIDC (federated credential - no secrets stored)
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Get ACR credentials from the deployed infrastructure
+      - name: Get ACR info
+        id: acr
+        run: |
+          ACR_NAME=$(az acr list -g "$AZURE_RG" --query "[0].name" -o tsv)
+          ACR_SERVER=$(az acr show -n "$ACR_NAME" --query "loginServer" -o tsv)
+          echo "name=$ACR_NAME" >> "$GITHUB_OUTPUT"
+          echo "server=$ACR_SERVER" >> "$GITHUB_OUTPUT"
+
+      - name: Login to ACR
+        run: az acr login --name ${{ steps.acr.outputs.name }}
+
+      # Build and push container image
+      - name: Build and push image
+        run: |
+          IMAGE="${{ steps.acr.outputs.server }}/helper:${{ github.sha }}"
+          IMAGE_LATEST="${{ steps.acr.outputs.server }}/helper:latest"
+          docker build -t "$IMAGE" -t "$IMAGE_LATEST" .
+          docker push "$IMAGE"
+          docker push "$IMAGE_LATEST"
+
+      # Deploy to App Service
+      - name: Get Web App name
+        id: webapp
+        run: |
+          APP_NAME=$(az webapp list -g "$AZURE_RG" --query "[0].name" -o tsv)
+          echo "name=$APP_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ steps.webapp.outputs.name }}
+          images: ${{ steps.acr.outputs.server }}/helper:${{ github.sha }}
+
+      - name: Wait for deployment and verify health
+        run: |
+          APP_URL=$(az webapp show -n "${{ steps.webapp.outputs.name }}" -g "$AZURE_RG" --query "defaultHostName" -o tsv)
+          echo "App URL: https://$APP_URL"
+
+          # Wait for the new container to start
+          for i in $(seq 1 12); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://$APP_URL/health" || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "Health check passed."
+              exit 0
+            fi
+            echo "Attempt $i: status=$STATUS, waiting 10s..."
+            sleep 10
+          done
+          echo "Warning: health check did not return 200 within 2 minutes"
+          exit 1
+
+  # Optional: deploy infrastructure changes when infra/ files change
+  deploy-infra:
+    runs-on: ubuntu-latest
+    if: contains(github.event.head_commit.modified, 'infra/')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ vars.AZURE_RESOURCE_GROUP }}
+          template: infra/main.bicep
+          failOnStdErr: false
