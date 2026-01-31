@@ -1,14 +1,15 @@
 # Calendar Agenda Plugin for Obsidian
 
-Display calendar events in markdown format in your Obsidian notes (read-only).
+Display calendar events from Google Calendar in markdown format in your Obsidian notes (read-only).
 
 ## Features
 
-- 📅 Display calendar events in clean markdown format
+- 📅 Fetch events directly from Google Calendar
+- 🔐 Secure OAuth 2.0 authentication
 - 🎯 Smart filtering of events (removes free/tentative events)
 - 🕒 Automatic time formatting
 - 📍 Location display support
-- 📋 Simple clipboard JSON import
+- 📖 Read-only display
 
 ## Installation
 
@@ -17,7 +18,6 @@ Display calendar events in markdown format in your Obsidian notes (read-only).
 1. Download the latest release files:
    - `main.js`
    - `manifest.json`
-   - `styles.css` (if available)
 
 2. Create a folder named `calendar-agenda` in your vault's `.obsidian/plugins/` directory
 
@@ -26,6 +26,35 @@ Display calendar events in markdown format in your Obsidian notes (read-only).
 4. Reload Obsidian
 
 5. Enable the plugin in Settings → Community Plugins
+
+### Google Calendar Setup
+
+Before using the plugin, you need to set up Google Calendar API access:
+
+1. **Create a Google Cloud Project:**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create a new project (or select existing)
+
+2. **Enable Google Calendar API:**
+   - In your project, go to "APIs & Services" → "Library"
+   - Search for "Google Calendar API"
+   - Click "Enable"
+
+3. **Create OAuth 2.0 Credentials:**
+   - Go to "APIs & Services" → "Credentials"
+   - Click "Create Credentials" → "OAuth client ID"
+   - Choose "Web application"
+   - Under "Authorized redirect URIs", add: `https://localhost`
+   - Click "Create"
+   - Copy your **Client ID**
+
+4. **Configure the Plugin:**
+   - Open Obsidian Settings → Community Plugins → Calendar Agenda
+   - Paste your Client ID
+   - Click "Authenticate with Google"
+   - Sign in and authorize the plugin
+   - Copy the `access_token` from the redirect URL
+   - Paste it into the "Access Token" field in settings
 
 ### Development Installation
 
@@ -54,14 +83,17 @@ Display calendar events in markdown format in your Obsidian notes (read-only).
 
 The plugin provides one simple command (accessible via Command Palette with `Ctrl/Cmd + P`):
 
-**Insert agenda from clipboard (JSON)** - Displays calendar events from JSON in clipboard
+**Insert today's agenda from Google Calendar** - Fetches today's events from Google Calendar and displays them
 
 ### Usage
 
-1. Copy event data as JSON to your clipboard (see format below)
-2. Open Command Palette (`Ctrl/Cmd + P`)
-3. Run "Insert agenda from clipboard (JSON)"
-4. The formatted agenda will be inserted at your cursor
+1. Set up Google Calendar API access (see Installation section above)
+2. Configure your Client ID in plugin settings
+3. Authenticate with Google
+4. Open a note where you want to insert your agenda
+5. Open Command Palette (`Ctrl/Cmd + P`)
+6. Run "Insert today's agenda from Google Calendar"
+7. The formatted agenda will be inserted at your cursor
 
 ### JSON Format
 
@@ -107,24 +139,30 @@ The plugin generates markdown in this format:
 
 ### Settings
 
-This plugin has no settings - it's designed to be simple and read-only.
+Configure the plugin in Settings → Community Plugins → Calendar Agenda:
+
+- **Google Client ID**: Your OAuth 2.0 Client ID from Google Cloud Console
+- **Authentication**: Sign in with Google to authorize calendar access
+- **Access Token**: Paste the access token from the OAuth redirect URL
+
+The plugin stores your access token locally for privacy.
 
 ## Integration with Calendar Services
 
 ### Google Calendar
 
-To get events from Google Calendar:
+The plugin integrates directly with Google Calendar via OAuth 2.0:
 
-1. Use Google Calendar API to export events
-2. Format as JSON
-3. Copy to clipboard or save to file
-4. Use the plugin commands to insert
+1. Set up API credentials (one-time setup)
+2. Authenticate with your Google account
+3. Fetch events with a single command
 
-### Other Calendar Apps
+### Security & Privacy
 
-- Export events from your calendar app to iCal/ICS format
-- Use a converter tool to transform to JSON
-- Import using the plugin
+- OAuth 2.0 for secure authentication
+- Access tokens stored locally in Obsidian
+- Read-only calendar access
+- No data sent to third-party servers
 
 ### Automation Ideas
 

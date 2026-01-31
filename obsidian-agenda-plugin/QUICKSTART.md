@@ -1,6 +1,6 @@
 # Quick Start Guide
 
-Get started with the Calendar Agenda plugin in 2 minutes!
+Get started with the Calendar Agenda plugin in 5 minutes!
 
 ## Installation
 
@@ -18,18 +18,38 @@ Get started with the Calendar Agenda plugin in 2 minutes!
    - Find "Calendar Agenda" in the list
    - Toggle it on
 
-## First Steps
+## Google Calendar Setup
 
-### Try the Plugin with Sample Events
+### Step 1: Create Google Cloud Project
 
-We've included sample event files for testing!
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (e.g., "Obsidian Calendar")
+3. Enable the Google Calendar API
+
+### Step 2: Create OAuth Credentials
+
+1. Go to "APIs & Services" → "Credentials"
+2. Click "Create Credentials" → "OAuth client ID"
+3. Choose "Web application"
+4. Under "Authorized redirect URIs", add: `https://localhost`
+5. Click "Create" and copy your **Client ID**
+
+### Step 3: Configure Plugin
+
+1. Open Obsidian Settings → Community Plugins → Calendar Agenda
+2. Paste your Client ID
+3. Click "Authenticate with Google"
+4. Sign in and authorize calendar access
+5. Copy the `access_token` from the redirect URL
+6. Paste it into the "Access Token" field
+
+## First Use
 
 **Quick Test:**
 1. Open or create a note
-2. Copy the contents of `examples/sample-events.json`
-3. Open Command Palette (Ctrl/Cmd + P)
-4. Run: "Insert agenda from clipboard (JSON)"
-5. You should see an agenda section inserted!
+2. Open Command Palette (Ctrl/Cmd + P)
+3. Run: "Insert today's agenda from Google Calendar"
+4. You should see today's events inserted!
 
 **Expected Output:**
 ```markdown
@@ -45,12 +65,11 @@ We've included sample event files for testing!
 
 ## Daily Workflow
 
-### Get Events from Your Calendar
-1. Export your day's events from Google Calendar/Outlook as JSON
-2. Copy the JSON to clipboard
-3. Open your note in Obsidian
-4. Command: "Insert agenda from clipboard (JSON)"
-5. Done!
+### Morning Routine
+1. Open your daily note in Obsidian
+2. Command: "Insert today's agenda from Google Calendar"
+3. Your events are displayed instantly
+4. Add notes and reflections throughout the day
 
 ## Common Use Cases
 
