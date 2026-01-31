@@ -8,6 +8,20 @@ const logger = require('../logger');
  * Endpoints for database sync, delta tracking, and conflict management
  */
 
+// Helper function to validate timestamp parameter
+function validateTimestamp(value, paramName) {
+  if (!value) {
+    throw new AppError(`Missing "${paramName}" parameter`, 400, 'MISSING_PARAMETER');
+  }
+  
+  const timestamp = parseInt(value, 10);
+  if (isNaN(timestamp)) {
+    throw new AppError(`Invalid "${paramName}" timestamp`, 400, 'INVALID_TIMESTAMP');
+  }
+  
+  return timestamp;
+}
+
 // GET /api/sync/status - Get sync status for all sources
 router.get('/status', asyncHandler(async (req, res) => {
   const syncService = req.app.locals.syncService;
@@ -60,20 +74,12 @@ router.get('/delta/:entityType', asyncHandler(async (req, res) => {
   const { entityType } = req.params;
   const { since } = req.query; // Unix timestamp in milliseconds
   
-  if (!since) {
-    throw new AppError('Missing "since" query parameter', 400, 'MISSING_PARAMETER');
-  }
-  
   const validTypes = ['journal', 'news', 'article', 'calendar'];
   if (!validTypes.includes(entityType)) {
     throw new AppError(`Invalid entity type. Must be one of: ${validTypes.join(', ')}`, 400, 'INVALID_TYPE');
   }
   
-  const sinceTime = parseInt(since, 10);
-  if (isNaN(sinceTime)) {
-    throw new AppError('Invalid "since" timestamp', 400, 'INVALID_TIMESTAMP');
-  }
-  
+  const sinceTime = validateTimestamp(since, 'since');
   const changes = db.getChangesSince(entityType, sinceTime);
   
   res.json({
@@ -90,21 +96,13 @@ router.get('/delta/:entityType/range', asyncHandler(async (req, res) => {
   const { entityType } = req.params;
   const { start, end } = req.query;
   
-  if (!start || !end) {
-    throw new AppError('Missing "start" or "end" query parameters', 400, 'MISSING_PARAMETERS');
-  }
-  
   const validTypes = ['journal', 'news', 'article', 'calendar'];
   if (!validTypes.includes(entityType)) {
     throw new AppError(`Invalid entity type. Must be one of: ${validTypes.join(', ')}`, 400, 'INVALID_TYPE');
   }
   
-  const startTime = parseInt(start, 10);
-  const endTime = parseInt(end, 10);
-  
-  if (isNaN(startTime) || isNaN(endTime)) {
-    throw new AppError('Invalid timestamp format', 400, 'INVALID_TIMESTAMP');
-  }
+  const startTime = validateTimestamp(start, 'start');
+  const endTime = validateTimestamp(end, 'end');
   
   const changes = db.getDelta(entityType, startTime, endTime);
   
@@ -227,18 +225,14 @@ router.get('/calendar', asyncHandler(async (req, res) => {
   const db = req.app.locals.database;
   const { startTime, endTime } = req.query;
   
-  if (!startTime || !endTime) {
-    throw new AppError('Missing "startTime" or "endTime" query parameters', 400, 'MISSING_PARAMETERS');
-  }
+  const start = validateTimestamp(startTime, 'startTime');
+  const end = validateTimestamp(endTime, 'endTime');
   
-  const events = db.getCalendarEvents(
-    parseInt(startTime, 10),
-    parseInt(endTime, 10)
-  );
+  const events = db.getCalendarEvents(start, end);
   
   res.json({
-    start_time: parseInt(startTime, 10),
-    end_time: parseInt(endTime, 10),
+    start_time: start,
+    end_time: end,
     count: events.length,
     events
   });

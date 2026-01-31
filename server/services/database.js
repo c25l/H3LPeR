@@ -1,6 +1,7 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const logger = require('../logger');
 
 /**
@@ -586,16 +587,10 @@ class DatabaseService {
   // ===== Utility Methods =====
   
   /**
-   * Generate a simple hash of content for conflict detection
+   * Generate a cryptographic hash of content for conflict detection
    */
   hashContent(content) {
-    let hash = 0;
-    for (let i = 0; i < content.length; i++) {
-      const char = content.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
-    }
-    return hash.toString(16);
+    return crypto.createHash('sha256').update(content).digest('hex');
   }
 
   /**

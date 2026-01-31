@@ -339,7 +339,7 @@ class SyncService {
       
       logger.info('SyncService', `Resolved conflict for ${entryId}: kept database version`);
     } else if (resolution === 'filesystem') {
-      // Use conflict version (which was the database version), clear conflict
+      // Use conflict version (which was the filesystem version), clear conflict
       this.db.upsertJournalEntry(
         entryId,
         entry.date,
