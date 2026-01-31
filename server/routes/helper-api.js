@@ -168,6 +168,33 @@ router.get('/sky', asyncHandler(async (req, res) => {
 router.get('/news', asyncHandler(async (req, res) => {
   const forceRefresh = req.query.refresh === 'true';
   const news = await newsService.getNews(forceRefresh);
+  
+  // Sync news articles to database
+  try {
+    const syncService = req.app.locals.syncService;
+    if (syncService && news.articles && news.articles.length > 0) {
+      const articlesForDb = news.articles.map(article => ({
+        id: article.id,
+        title: article.title,
+        summary: article.summary || '',
+        url: article.link || '',
+        source: article.source || 'unknown',
+        category: 'news',
+        published_at: article.pubDate ? new Date(article.pubDate).getTime() : Date.now(),
+        fetched_at: Date.now(),
+        cluster_id: article.group || null,
+        rank: article.rank || 0,
+        content: article.content || ''
+      }));
+      
+      await syncService.syncNews(articlesForDb);
+      logger.debug('helper-api', `Synced ${articlesForDb.length} news articles to database`);
+    }
+  } catch (err) {
+    logger.error('helper-api', 'Failed to sync news to database', err);
+    // Don't fail the request if sync fails
+  }
+  
   res.json(news);
 }));
 
@@ -177,6 +204,31 @@ router.get('/research', asyncHandler(async (req, res) => {
   const { date } = req.query;
   const forceRefresh = req.query.refresh === 'true';
   const research = await researchService.getResearch(date, forceRefresh);
+  
+  // Sync research articles to database
+  try {
+    const syncService = req.app.locals.syncService;
+    if (syncService && research.articles && research.articles.length > 0) {
+      const articlesForDb = research.articles.map(article => ({
+        id: article.id,
+        title: article.title,
+        authors: article.authors || [],
+        abstract: article.summary || '',
+        url: article.link || '',
+        published_at: article.published ? new Date(article.published).getTime() : Date.now(),
+        fetched_at: Date.now(),
+        categories: article.categories || [],
+        rank: article.rank || 0
+      }));
+      
+      await syncService.syncResearch(articlesForDb);
+      logger.debug('helper-api', `Synced ${articlesForDb.length} research articles to database`);
+    }
+  } catch (err) {
+    logger.error('helper-api', 'Failed to sync research to database', err);
+    // Don't fail the request if sync fails
+  }
+  
   res.json(research);
 }));
 

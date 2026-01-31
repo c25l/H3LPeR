@@ -13,6 +13,8 @@ const { authMiddleware, setupAuth } = require('./auth');
 const VaultService = require('./services/vault');
 const BacklinksService = require('./services/backlinks');
 const JournalService = require('./services/journal');
+const DatabaseService = require('./services/database');
+const SyncService = require('./services/sync');
 const GoogleAuthService = require('./auth/google');
 const { errorHandler } = require('./middleware/error-handler');
 const logger = require('./logger');
@@ -25,10 +27,17 @@ const backlinks = new BacklinksService(vault);
 const journal = new JournalService(vault, config);
 const googleAuth = new GoogleAuthService(config, require('./config').configPath);
 
+// Database path (default to .data/writer.db in project root)
+const dbPath = path.join(__dirname, '..', '.data', 'writer.db');
+const database = new DatabaseService(dbPath);
+const syncService = new SyncService(vault, database, journal);
+
 // Make services available to routes
 app.locals.vault = vault;
 app.locals.backlinks = backlinks;
 app.locals.journal = journal;
+app.locals.database = database;
+app.locals.syncService = syncService;
 app.locals.config = config;
 app.locals.googleAuth = googleAuth;
 
@@ -63,6 +72,7 @@ setupAuth(app, config);
 
 // Routes
 const apiRoutes = require('./routes/api');
+const syncApiRoutes = require('./routes/sync-api');
 const pageRoutes = require('./routes/pages');
 const googleApiRoutes = require('./routes/google-api');
 const { setupHelperRoutes } = require('./routes/helper-api');
@@ -120,6 +130,9 @@ app.get('/api/auth/google/logout', authMiddleware, async (req, res) => {
 // API routes (protected)
 app.use('/api', authMiddleware, apiRoutes);
 
+// Sync API routes (protected)
+app.use('/api/sync', authMiddleware, syncApiRoutes);
+
 // Helper API routes (protected)
 app.use('/api/helper', authMiddleware, helperApiRoutes);
 
@@ -137,6 +150,11 @@ async function initialize() {
   logger.info('init', 'Building backlinks index...');
   await backlinks.buildIndex();
   logger.info('init', 'Backlinks index ready');
+
+  // Start periodic sync with database (every 5 minutes)
+  logger.info('init', 'Starting database sync service...');
+  syncService.startPeriodicSync(5 * 60 * 1000);
+  logger.info('init', 'Database sync service started');
 
   // Watch for file changes
   vault.watch((event, filePath) => {

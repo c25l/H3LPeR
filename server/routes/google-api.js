@@ -68,6 +68,32 @@ router.get('/calendar/events', requireGoogleAuth, async (req, res) => {
 
     const service = new GoogleCalendarService(req.googleClient);
     const events = await service.listEvents(ids, startDate, endDate, parseInt(maxResults) || 250);
+    
+    // Sync calendar events to database
+    try {
+      const syncService = req.app.locals.syncService;
+      if (syncService && events && events.length > 0) {
+        const eventsForDb = events.map(event => ({
+          id: event.id,
+          calendar_id: event.calendarId || 'primary',
+          summary: event.summary || '',
+          description: event.description || '',
+          location: event.location || '',
+          start_time: event.start ? new Date(event.start).getTime() : null,
+          end_time: event.end ? new Date(event.end).getTime() : null,
+          all_day: event.allDay || false,
+          recurrence: event.recurrence || null,
+          source: 'google'
+        }));
+        
+        await syncService.syncCalendar(eventsForDb);
+        logger.debug('google-api', `Synced ${eventsForDb.length} calendar events to database`);
+      }
+    } catch (err) {
+      logger.error('google-api', 'Failed to sync calendar to database', err);
+      // Don't fail the request if sync fails
+    }
+    
     res.json(events);
   } catch (error) {
     console.error('Calendar events error:', error);
