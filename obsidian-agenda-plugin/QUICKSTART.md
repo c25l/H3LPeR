@@ -30,18 +30,18 @@ Get started with the Calendar Agenda plugin in 5 minutes!
 
 1. Go to "APIs & Services" → "Credentials"
 2. Click "Create Credentials" → "OAuth client ID"
-3. Choose "Web application"
-4. Under "Authorized redirect URIs", add: `http://localhost`
-5. Click "Create" and copy your **Client ID**
+3. Choose "Desktop app" (or "Web application")
+4. Under "Authorized redirect URIs", add: `http://localhost:42813/callback`
+5. Click "Create" and copy your **Client ID** and **Client Secret**
 
 ### Step 3: Configure Plugin
 
 1. Open Obsidian Settings → Community Plugins → Calendar Agenda
-2. Paste your Client ID
+2. Paste your Client ID and Client Secret
 3. Click "Authenticate with Google"
-4. Sign in and authorize calendar access
-5. Copy the `access_token` from the redirect URL
-6. Paste it into the "Access Token" field
+4. Browser opens → Sign in and authorize
+5. Plugin automatically receives callback
+6. Done! You're authenticated and tokens are stored
 
 ## First Use
 
@@ -50,6 +50,8 @@ Get started with the Calendar Agenda plugin in 5 minutes!
 2. Open Command Palette (Ctrl/Cmd + P)
 3. Run: "Insert today's agenda from Google Calendar"
 4. You should see today's events inserted!
+
+**Note:** After initial authentication, you'll stay signed in automatically. The plugin stores a refresh token and handles token renewal automatically.
 
 **Expected Output:**
 ```markdown

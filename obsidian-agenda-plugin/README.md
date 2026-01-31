@@ -5,7 +5,8 @@ Display calendar events from Google Calendar in markdown format in your Obsidian
 ## Features
 
 - 📅 Fetch events directly from Google Calendar
-- 🔐 Secure OAuth 2.0 authentication
+- 🔐 Secure OAuth 2.0 authentication with local callback server
+- 🔄 Automatic token refresh (login once, stay authenticated)
 - 🎯 Smart filtering of events (removes free/tentative events)
 - 🕒 Automatic time formatting
 - 📍 Location display support
@@ -43,18 +44,18 @@ Before using the plugin, you need to set up Google Calendar API access:
 3. **Create OAuth 2.0 Credentials:**
    - Go to "APIs & Services" → "Credentials"
    - Click "Create Credentials" → "OAuth client ID"
-   - Choose "Web application"
-   - Under "Authorized redirect URIs", add: `http://localhost`
+   - Choose "Desktop app" (or "Web application")
+   - Under "Authorized redirect URIs", add: `http://localhost:42813/callback`
    - Click "Create"
-   - Copy your **Client ID**
+   - Copy your **Client ID** and **Client Secret**
 
 4. **Configure the Plugin:**
    - Open Obsidian Settings → Community Plugins → Calendar Agenda
-   - Paste your Client ID
+   - Paste your Client ID and Client Secret
    - Click "Authenticate with Google"
-   - Sign in and authorize the plugin
-   - Copy the `access_token` from the redirect URL
-   - Paste it into the "Access Token" field in settings
+   - A browser window will open - sign in and authorize
+   - The plugin automatically receives the OAuth callback
+   - You're authenticated! The token is stored and will auto-refresh
 
 ### Development Installation
 
@@ -88,12 +89,14 @@ The plugin provides one simple command (accessible via Command Palette with `Ctr
 ### Usage
 
 1. Set up Google Calendar API access (see Installation section above)
-2. Configure your Client ID in plugin settings
-3. Authenticate with Google
+2. Configure your Client ID and Client Secret in plugin settings
+3. Click "Authenticate with Google" - authentication happens automatically via local server
 4. Open a note where you want to insert your agenda
 5. Open Command Palette (`Ctrl/Cmd + P`)
 6. Run "Insert today's agenda from Google Calendar"
 7. The formatted agenda will be inserted at your cursor
+
+**Note:** After initial authentication, the plugin stores a refresh token. You'll stay authenticated automatically - no need to sign in again unless you explicitly sign out.
 
 ### JSON Format
 
@@ -142,10 +145,14 @@ The plugin generates markdown in this format:
 Configure the plugin in Settings → Community Plugins → Calendar Agenda:
 
 - **Google Client ID**: Your OAuth 2.0 Client ID from Google Cloud Console
-- **Authentication**: Sign in with Google to authorize calendar access
-- **Access Token**: Paste the access token from the OAuth redirect URL
+- **Google Client Secret**: Your OAuth 2.0 Client Secret (stored securely)
+- **Authentication**: Click to start OAuth flow via local server (port 42813)
+- **Sign Out**: Clear stored tokens if needed
 
-The plugin stores your access token locally for privacy.
+The plugin automatically:
+- Stores refresh tokens for persistent authentication
+- Refreshes access tokens when they expire
+- Runs a local HTTP server during OAuth flow for secure callback handling
 
 ## Integration with Calendar Services
 
@@ -154,15 +161,20 @@ The plugin stores your access token locally for privacy.
 The plugin integrates directly with Google Calendar via OAuth 2.0:
 
 1. Set up API credentials (one-time setup)
-2. Authenticate with your Google account
-3. Fetch events with a single command
+2. Authenticate with your Google account (opens browser, handled automatically)
+3. Local HTTP server receives OAuth callback on port 42813
+4. Refresh token stored for persistent authentication
+5. Fetch events with a single command
 
 ### Security & Privacy
 
-- OAuth 2.0 for secure authentication
-- Access tokens stored locally in Obsidian
+- OAuth 2.0 authorization code flow (more secure than implicit flow)
+- Local HTTP server for callback (like desktop apps)
+- Refresh tokens stored locally in Obsidian
+- Access tokens auto-refresh when expired
 - Read-only calendar access
 - No data sent to third-party servers
+- Client secret stored securely in plugin data
 
 ### Automation Ideas
 

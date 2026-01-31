@@ -3,8 +3,8 @@
 	"name": "Calendar Agenda",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Fetch and display calendar events from Google Calendar in markdown format.",
+	"description": "Fetch and display Google Calendar events with OAuth authentication.",
 	"author": "H3LPeR",
 	"authorUrl": "https://github.com/c25l/H3LPeR",
-	"isDesktopOnly": false
+	"isDesktopOnly": true
 }

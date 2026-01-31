@@ -1,23 +1,31 @@
 import { App, Editor, MarkdownView, Notice, Plugin, PluginSettingTab, Setting, requestUrl } from 'obsidian';
 import { filterAgendaEventsFromCalendar, buildAgendaMarkdown, CalendarEvent } from './agenda-utils';
+import * as http from 'http';
 
 interface CalendarAgendaSettings {
 	googleClientId: string;
+	googleClientSecret: string;
+	refreshToken: string;
 	accessToken: string;
 	tokenExpiry: number;
 }
 
 const DEFAULT_SETTINGS: CalendarAgendaSettings = {
 	googleClientId: '',
+	googleClientSecret: '',
+	refreshToken: '',
 	accessToken: '',
 	tokenExpiry: 0
 }
 
-// Access tokens from Google OAuth typically expire in 1 hour
-const TOKEN_EXPIRY_DURATION_MS = 3600 * 1000;
+// OAuth configuration
+const OAUTH_PORT = 42813;
+const REDIRECT_URI = `http://localhost:${OAUTH_PORT}/callback`;
+const OAUTH_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
 
 export default class CalendarAgendaPlugin extends Plugin {
 	settings: CalendarAgendaSettings;
+	private oauthServer: http.Server | null = null;
 
 	async onload() {
 		await this.loadSettings();
@@ -35,8 +43,11 @@ export default class CalendarAgendaPlugin extends Plugin {
 		this.addSettingTab(new CalendarAgendaSettingTab(this.app, this));
 	}
 
-	onunload() {
-		// Cleanup if needed
+	async onunload() {
+		// Close OAuth server if running
+		if (this.oauthServer) {
+			this.oauthServer.close();
+		}
 	}
 
 	async loadSettings() {
@@ -51,45 +62,196 @@ export default class CalendarAgendaPlugin extends Plugin {
 	 * Check if Google is authenticated
 	 */
 	isAuthenticated(): boolean {
-		return !!(this.settings.accessToken && this.settings.tokenExpiry > Date.now());
+		// Check if we have a valid access token or refresh token
+		return !!(
+			(this.settings.accessToken && this.settings.tokenExpiry > Date.now()) ||
+			this.settings.refreshToken
+		);
 	}
 
 	/**
-	 * Authenticate with Google using OAuth 2.0 implicit flow
+	 * Refresh access token using refresh token
 	 */
-	async authenticateGoogle() {
-		if (!this.settings.googleClientId) {
-			new Notice('Please configure Google Client ID in settings');
+	async refreshAccessToken(): Promise<boolean> {
+		if (!this.settings.refreshToken) {
+			return false;
+		}
+
+		try {
+			const response = await requestUrl({
+				url: 'https://oauth2.googleapis.com/token',
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/x-www-form-urlencoded'
+				},
+				body: new URLSearchParams({
+					client_id: this.settings.googleClientId,
+					client_secret: this.settings.googleClientSecret,
+					refresh_token: this.settings.refreshToken,
+					grant_type: 'refresh_token'
+				}).toString()
+			});
+
+			if (response.status === 200) {
+				const data = response.json;
+				this.settings.accessToken = data.access_token;
+				this.settings.tokenExpiry = Date.now() + (data.expires_in * 1000);
+				await this.saveSettings();
+				return true;
+			}
+		} catch (error) {
+			console.error('Failed to refresh access token:', error);
+		}
+
+		return false;
+	}
+
+	/**
+	 * Start local OAuth server and authenticate with Google
+	 */
+	async authenticateGoogle(): Promise<void> {
+		if (!this.settings.googleClientId || !this.settings.googleClientSecret) {
+			new Notice('Please configure Google Client ID and Secret in settings');
 			return;
 		}
 
-		// Using http://localhost (not https) as Google requires specific redirect URIs
-		// This must match the redirect URI configured in Google Cloud Console
-		const redirectUri = 'http://localhost';
-		const scope = 'https://www.googleapis.com/auth/calendar.readonly';
+		// Generate random state for CSRF protection
 		const state = Math.random().toString(36).substring(7);
 
+		// Create authorization URL
 		const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
 			`client_id=${encodeURIComponent(this.settings.googleClientId)}&` +
-			`redirect_uri=${encodeURIComponent(redirectUri)}&` +
-			`response_type=token&` +
-			`scope=${encodeURIComponent(scope)}&` +
+			`redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+			`response_type=code&` +
+			`scope=${encodeURIComponent(OAUTH_SCOPE)}&` +
+			`access_type=offline&` +
+			`prompt=consent&` +
 			`state=${state}`;
 
-		new Notice('Opening Google authentication...');
-		window.open(authUrl, '_blank');
-		
-		new Notice('After authorizing, paste the access token from the URL into settings');
+		new Notice('Starting OAuth server...');
+
+		// Start local server to receive callback
+		return new Promise((resolve, reject) => {
+			this.oauthServer = http.createServer(async (req, res) => {
+				try {
+					const url = new URL(req.url || '', `http://localhost:${OAUTH_PORT}`);
+					
+					if (url.pathname === '/callback') {
+						const code = url.searchParams.get('code');
+						const returnedState = url.searchParams.get('state');
+						
+						if (!code) {
+							res.writeHead(400, { 'Content-Type': 'text/html' });
+							res.end('<html><body><h1>Error: No authorization code received</h1></body></html>');
+							this.oauthServer?.close();
+							reject(new Error('No authorization code'));
+							return;
+						}
+
+						if (returnedState !== state) {
+							res.writeHead(400, { 'Content-Type': 'text/html' });
+							res.end('<html><body><h1>Error: Invalid state (CSRF protection)</h1></body></html>');
+							this.oauthServer?.close();
+							reject(new Error('Invalid state'));
+							return;
+						}
+
+						// Exchange code for tokens
+						try {
+							const tokenResponse = await requestUrl({
+								url: 'https://oauth2.googleapis.com/token',
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/x-www-form-urlencoded'
+								},
+								body: new URLSearchParams({
+									client_id: this.settings.googleClientId,
+									client_secret: this.settings.googleClientSecret,
+									code: code,
+									grant_type: 'authorization_code',
+									redirect_uri: REDIRECT_URI
+								}).toString()
+							});
+
+							if (tokenResponse.status === 200) {
+								const data = tokenResponse.json;
+								
+								// Save tokens
+								this.settings.accessToken = data.access_token;
+								this.settings.refreshToken = data.refresh_token || this.settings.refreshToken;
+								this.settings.tokenExpiry = Date.now() + (data.expires_in * 1000);
+								await this.saveSettings();
+
+								// Send success response
+								res.writeHead(200, { 'Content-Type': 'text/html' });
+								res.end('<html><body><h1>✓ Authentication successful!</h1><p>You can close this window and return to Obsidian.</p></body></html>');
+								
+								new Notice('✓ Google Calendar authenticated successfully!');
+								
+								// Close server after a short delay
+								setTimeout(() => {
+									this.oauthServer?.close();
+									this.oauthServer = null;
+								}, 1000);
+								
+								resolve();
+							} else {
+								throw new Error('Failed to exchange code for tokens');
+							}
+						} catch (error) {
+							console.error('Token exchange error:', error);
+							res.writeHead(500, { 'Content-Type': 'text/html' });
+							res.end('<html><body><h1>Error: Failed to exchange authorization code</h1></body></html>');
+							this.oauthServer?.close();
+							reject(error);
+						}
+					} else {
+						res.writeHead(404, { 'Content-Type': 'text/plain' });
+						res.end('Not found');
+					}
+				} catch (error) {
+					console.error('OAuth server error:', error);
+					res.writeHead(500, { 'Content-Type': 'text/plain' });
+					res.end('Internal server error');
+					this.oauthServer?.close();
+					reject(error);
+				}
+			});
+
+			this.oauthServer.listen(OAUTH_PORT, () => {
+				new Notice(`OAuth server listening on port ${OAUTH_PORT}`);
+				// Open browser to authorization URL
+				window.open(authUrl, '_blank');
+			});
+
+			this.oauthServer.on('error', (error) => {
+				new Notice('Failed to start OAuth server. Port may be in use.');
+				console.error('Server error:', error);
+				reject(error);
+			});
+		});
 	}
 
 	/**
 	 * Fetch events from Google Calendar and insert agenda
 	 */
 	async fetchAndInsertAgenda(editor: Editor) {
+		// Check if authenticated, try to refresh token if expired
 		if (!this.isAuthenticated()) {
 			new Notice('Please authenticate with Google Calendar first');
 			await this.authenticateGoogle();
 			return;
+		}
+
+		// If access token expired but we have refresh token, refresh it
+		if (this.settings.tokenExpiry <= Date.now() && this.settings.refreshToken) {
+			new Notice('Refreshing access token...');
+			const refreshed = await this.refreshAccessToken();
+			if (!refreshed) {
+				new Notice('Failed to refresh token. Please re-authenticate.');
+				await this.authenticateGoogle();
+				return;
+			}
 		}
 
 		try {
@@ -132,10 +294,14 @@ export default class CalendarAgendaPlugin extends Plugin {
 		} catch (error) {
 			console.error('Failed to fetch calendar events:', error);
 			if (error.message?.includes('401')) {
-				new Notice('Authentication expired. Please re-authenticate in settings.');
-				this.settings.accessToken = '';
-				this.settings.tokenExpiry = 0;
-				await this.saveSettings();
+				new Notice('Authentication expired. Refreshing...');
+				const refreshed = await this.refreshAccessToken();
+				if (refreshed) {
+					// Retry the fetch
+					return this.fetchAndInsertAgenda(editor);
+				} else {
+					new Notice('Please re-authenticate in settings.');
+				}
 			} else {
 				new Notice('Failed to fetch calendar events. Check console for details.');
 			}
@@ -182,9 +348,9 @@ class CalendarAgendaSettingTab extends PluginSettingTab {
 		const steps = containerEl.createEl('ol');
 		steps.createEl('li', {text: 'Go to Google Cloud Console'});
 		steps.createEl('li', {text: 'Create a project and enable Google Calendar API'});
-		steps.createEl('li', {text: 'Create OAuth 2.0 credentials (Web application)'});
-		steps.createEl('li', {text: 'Add http://localhost as authorized redirect URI'});
-		steps.createEl('li', {text: 'Copy Client ID below'});
+		steps.createEl('li', {text: 'Create OAuth 2.0 credentials (Desktop app or Web application)'});
+		steps.createEl('li', {text: `Add http://localhost:${OAUTH_PORT}/callback as authorized redirect URI`});
+		steps.createEl('li', {text: 'Copy Client ID and Client Secret below'});
 
 		// Google Client ID
 		new Setting(containerEl)
@@ -198,61 +364,64 @@ class CalendarAgendaSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
+		// Google Client Secret
+		new Setting(containerEl)
+			.setName('Google Client Secret')
+			.setDesc('OAuth 2.0 Client Secret from Google Cloud Console')
+			.addText(text => {
+				text.setPlaceholder('Enter your client secret')
+					.setValue(this.plugin.settings.googleClientSecret)
+					.onChange(async (value) => {
+						this.plugin.settings.googleClientSecret = value;
+						await this.plugin.saveSettings();
+					});
+				text.inputEl.type = 'password';
+			});
+
 		// Authentication status
 		const authStatus = containerEl.createDiv();
 		authStatus.addClass('setting-item-description');
 		if (this.plugin.isAuthenticated()) {
 			authStatus.setText('✓ Authenticated with Google Calendar');
-			authStatus.style.color = 'green';
+			authStatus.style.color = 'var(--text-success)';
 		} else {
 			authStatus.setText('✗ Not authenticated');
-			authStatus.style.color = 'red';
+			authStatus.style.color = 'var(--text-error)';
 		}
 
 		// Authenticate button
 		new Setting(containerEl)
 			.setName('Authenticate')
-			.setDesc('Sign in with Google Calendar')
+			.setDesc('Sign in with Google Calendar. This will open a browser window.')
 			.addButton(button => button
 				.setButtonText('Authenticate with Google')
+				.setCta()
 				.onClick(async () => {
-					await this.plugin.authenticateGoogle();
+					try {
+						await this.plugin.authenticateGoogle();
+						this.display(); // Refresh display
+					} catch (error) {
+						new Notice('Authentication failed. Check console for details.');
+						console.error('Auth error:', error);
+					}
 				}));
-
-		// Manual token entry (for completing OAuth flow)
-		new Setting(containerEl)
-			.setName('Access Token (from OAuth redirect)')
-			.setDesc('After authenticating, paste the access_token from the redirect URL')
-			.addText(text => {
-				text
-					.setPlaceholder('Paste access token here')
-					.setValue('')
-					.onChange(async (value) => {
-						// Google access tokens are typically 100+ characters
-						if (value && value.length > 100) {
-							this.plugin.settings.accessToken = value;
-							this.plugin.settings.tokenExpiry = Date.now() + TOKEN_EXPIRY_DURATION_MS;
-							await this.plugin.saveSettings();
-							new Notice('Access token saved!');
-							this.display(); // Refresh display
-						}
-					});
-				text.inputEl.style.width = '100%';
-			});
 
 		// Clear authentication
-		new Setting(containerEl)
-			.setName('Clear authentication')
-			.setDesc('Remove stored access token')
-			.addButton(button => button
-				.setButtonText('Clear')
-				.setWarning()
-				.onClick(async () => {
-					this.plugin.settings.accessToken = '';
-					this.plugin.settings.tokenExpiry = 0;
-					await this.plugin.saveSettings();
-					new Notice('Authentication cleared');
-					this.display(); // Refresh display
-				}));
+		if (this.plugin.isAuthenticated()) {
+			new Setting(containerEl)
+				.setName('Clear authentication')
+				.setDesc('Remove stored tokens and sign out')
+				.addButton(button => button
+					.setButtonText('Sign Out')
+					.setWarning()
+					.onClick(async () => {
+						this.plugin.settings.accessToken = '';
+						this.plugin.settings.refreshToken = '';
+						this.plugin.settings.tokenExpiry = 0;
+						await this.plugin.saveSettings();
+						new Notice('Signed out successfully');
+						this.display(); // Refresh display
+					}));
+		}
 	}
 }
