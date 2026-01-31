@@ -1,0 +1,19 @@
+[
+  {
+    "summary": "Company All-Hands",
+    "start": "2024-02-01",
+    "allDay": true
+  },
+  {
+    "summary": "Vacation",
+    "start": "2024-02-15",
+    "end": "2024-02-18",
+    "allDay": true
+  },
+  {
+    "summary": "Conference Day 1",
+    "start": "2024-03-01",
+    "allDay": true,
+    "location": "Convention Center"
+  }
+]

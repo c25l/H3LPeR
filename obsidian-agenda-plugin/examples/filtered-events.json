@@ -1,0 +1,26 @@
+[
+  {
+    "summary": "Team Sync (Tentative)",
+    "start": "2024-01-31T09:00:00",
+    "end": "2024-01-31T09:30:00",
+    "availability": "tentative"
+  },
+  {
+    "summary": "Important Client Call",
+    "start": "2024-01-31T10:00:00",
+    "end": "2024-01-31T11:00:00",
+    "availability": "busy"
+  },
+  {
+    "summary": "Blocked Time (Free)",
+    "start": "2024-01-31T12:00:00",
+    "end": "2024-01-31T13:00:00",
+    "availability": "free"
+  },
+  {
+    "summary": "Design Review",
+    "start": "2024-01-31T14:00:00",
+    "end": "2024-01-31T15:00:00",
+    "availability": "busy"
+  }
+]
