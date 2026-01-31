@@ -190,7 +190,8 @@ class DatabaseService {
    */
   getChangesSince(entityType, since) {
     const stmt = this.db.prepare(`
-      SELECT * FROM change_log
+      SELECT id, entity_type, entity_id, operation, version, data, created_at, created_by
+      FROM change_log
       WHERE entity_type = ? AND created_at > ?
       ORDER BY created_at ASC
     `);
@@ -206,7 +207,8 @@ class DatabaseService {
    */
   getDelta(entityType, startTime, endTime) {
     const stmt = this.db.prepare(`
-      SELECT * FROM change_log
+      SELECT id, entity_type, entity_id, operation, version, data, created_at, created_by
+      FROM change_log
       WHERE entity_type = ? AND created_at > ? AND created_at <= ?
       ORDER BY created_at ASC
     `);
