@@ -10,3 +10,5 @@ credential*
 *.pem
 vault*
 .data/
+test-sync.js
+test-vault/
