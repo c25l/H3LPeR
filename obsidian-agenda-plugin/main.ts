@@ -22,10 +22,13 @@ const DEFAULT_SETTINGS: CalendarAgendaSettings = {
 const OAUTH_PORT = 42813;
 const REDIRECT_URI = `http://localhost:${OAUTH_PORT}/callback`;
 const OAUTH_SCOPE = 'https://www.googleapis.com/auth/calendar.readonly';
+const OAUTH_SERVER_CLEANUP_DELAY_MS = 1000; // Delay before closing server after successful auth
 
 export default class CalendarAgendaPlugin extends Plugin {
 	settings: CalendarAgendaSettings;
 	private oauthServer: http.Server | null = null;
+	private fetchRetryCount = 0;
+	private readonly MAX_FETCH_RETRIES = 1;
 
 	async onload() {
 		await this.loadSettings();
@@ -115,6 +118,12 @@ export default class CalendarAgendaPlugin extends Plugin {
 			return;
 		}
 
+		// Close any existing server to prevent multiple instances
+		if (this.oauthServer) {
+			this.oauthServer.close();
+			this.oauthServer = null;
+		}
+
 		// Generate random state for CSRF protection
 		const state = Math.random().toString(36).substring(7);
 
@@ -177,6 +186,8 @@ export default class CalendarAgendaPlugin extends Plugin {
 								const data = tokenResponse.json;
 								
 								// Save tokens
+								// Note: Google only returns refresh_token on first authorization or with prompt=consent
+								// Preserve existing refresh token if not provided in response
 								this.settings.accessToken = data.access_token;
 								this.settings.refreshToken = data.refresh_token || this.settings.refreshToken;
 								this.settings.tokenExpiry = Date.now() + (data.expires_in * 1000);
@@ -188,11 +199,11 @@ export default class CalendarAgendaPlugin extends Plugin {
 								
 								new Notice('✓ Google Calendar authenticated successfully!');
 								
-								// Close server after a short delay
+								// Close server after a short delay to ensure response is sent
 								setTimeout(() => {
 									this.oauthServer?.close();
 									this.oauthServer = null;
-								}, 1000);
+								}, OAUTH_SERVER_CLEANUP_DELAY_MS);
 								
 								resolve();
 							} else {
@@ -224,8 +235,12 @@ export default class CalendarAgendaPlugin extends Plugin {
 				window.open(authUrl, '_blank');
 			});
 
-			this.oauthServer.on('error', (error) => {
-				new Notice('Failed to start OAuth server. Port may be in use.');
+			this.oauthServer.on('error', (error: any) => {
+				if (error.code === 'EADDRINUSE') {
+					new Notice(`Port ${OAUTH_PORT} is already in use. Please close any other instances of the plugin or applications using this port.`);
+				} else {
+					new Notice('Failed to start OAuth server. Check console for details.');
+				}
 				console.error('Server error:', error);
 				reject(error);
 			});
@@ -239,6 +254,7 @@ export default class CalendarAgendaPlugin extends Plugin {
 		// Check if authenticated, try to refresh token if expired
 		if (!this.isAuthenticated()) {
 			new Notice('Please authenticate with Google Calendar first');
+			this.fetchRetryCount = 0; // Reset retry count
 			await this.authenticateGoogle();
 			return;
 		}
@@ -249,6 +265,7 @@ export default class CalendarAgendaPlugin extends Plugin {
 			const refreshed = await this.refreshAccessToken();
 			if (!refreshed) {
 				new Notice('Failed to refresh token. Please re-authenticate.');
+				this.fetchRetryCount = 0; // Reset retry count
 				await this.authenticateGoogle();
 				return;
 			}
@@ -290,19 +307,23 @@ export default class CalendarAgendaPlugin extends Plugin {
 				transparency: event.transparency
 			}));
 
+			this.fetchRetryCount = 0; // Reset on success
 			this.insertAgenda(editor, events);
 		} catch (error) {
 			console.error('Failed to fetch calendar events:', error);
-			if (error.message?.includes('401')) {
+			if (error.message?.includes('401') && this.fetchRetryCount < this.MAX_FETCH_RETRIES) {
+				this.fetchRetryCount++;
 				new Notice('Authentication expired. Refreshing...');
 				const refreshed = await this.refreshAccessToken();
 				if (refreshed) {
-					// Retry the fetch
+					// Retry the fetch once
 					return this.fetchAndInsertAgenda(editor);
 				} else {
+					this.fetchRetryCount = 0;
 					new Notice('Please re-authenticate in settings.');
 				}
 			} else {
+				this.fetchRetryCount = 0;
 				new Notice('Failed to fetch calendar events. Check console for details.');
 			}
 		}

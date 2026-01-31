@@ -116,10 +116,13 @@ var DEFAULT_SETTINGS = {
 var OAUTH_PORT = 42813;
 var REDIRECT_URI = `http://localhost:${OAUTH_PORT}/callback`;
 var OAUTH_SCOPE = "https://www.googleapis.com/auth/calendar.readonly";
+var OAUTH_SERVER_CLEANUP_DELAY_MS = 1e3;
 var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
     this.oauthServer = null;
+    this.fetchRetryCount = 0;
+    this.MAX_FETCH_RETRIES = 1;
   }
   async onload() {
     await this.loadSettings();
@@ -190,6 +193,10 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
       new import_obsidian.Notice("Please configure Google Client ID and Secret in settings");
       return;
     }
+    if (this.oauthServer) {
+      this.oauthServer.close();
+      this.oauthServer = null;
+    }
     const state = Math.random().toString(36).substring(7);
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${encodeURIComponent(this.settings.googleClientId)}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=code&scope=${encodeURIComponent(OAUTH_SCOPE)}&access_type=offline&prompt=consent&state=${state}`;
     new import_obsidian.Notice("Starting OAuth server...");
@@ -243,7 +250,7 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
                   var _a2;
                   (_a2 = this.oauthServer) == null ? void 0 : _a2.close();
                   this.oauthServer = null;
-                }, 1e3);
+                }, OAUTH_SERVER_CLEANUP_DELAY_MS);
                 resolve();
               } else {
                 throw new Error("Failed to exchange code for tokens");
@@ -272,7 +279,11 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
         window.open(authUrl, "_blank");
       });
       this.oauthServer.on("error", (error) => {
-        new import_obsidian.Notice("Failed to start OAuth server. Port may be in use.");
+        if (error.code === "EADDRINUSE") {
+          new import_obsidian.Notice(`Port ${OAUTH_PORT} is already in use. Please close any other instances of the plugin or applications using this port.`);
+        } else {
+          new import_obsidian.Notice("Failed to start OAuth server. Check console for details.");
+        }
         console.error("Server error:", error);
         reject(error);
       });
@@ -285,6 +296,7 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
     var _a;
     if (!this.isAuthenticated()) {
       new import_obsidian.Notice("Please authenticate with Google Calendar first");
+      this.fetchRetryCount = 0;
       await this.authenticateGoogle();
       return;
     }
@@ -293,6 +305,7 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
       const refreshed = await this.refreshAccessToken();
       if (!refreshed) {
         new import_obsidian.Notice("Failed to refresh token. Please re-authenticate.");
+        this.fetchRetryCount = 0;
         await this.authenticateGoogle();
         return;
       }
@@ -322,18 +335,22 @@ var CalendarAgendaPlugin = class extends import_obsidian.Plugin {
         allDay: !event.start.dateTime,
         transparency: event.transparency
       }));
+      this.fetchRetryCount = 0;
       this.insertAgenda(editor, events);
     } catch (error) {
       console.error("Failed to fetch calendar events:", error);
-      if ((_a = error.message) == null ? void 0 : _a.includes("401")) {
+      if (((_a = error.message) == null ? void 0 : _a.includes("401")) && this.fetchRetryCount < this.MAX_FETCH_RETRIES) {
+        this.fetchRetryCount++;
         new import_obsidian.Notice("Authentication expired. Refreshing...");
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
           return this.fetchAndInsertAgenda(editor);
         } else {
+          this.fetchRetryCount = 0;
           new import_obsidian.Notice("Please re-authenticate in settings.");
         }
       } else {
+        this.fetchRetryCount = 0;
         new import_obsidian.Notice("Failed to fetch calendar events. Check console for details.");
       }
     }
