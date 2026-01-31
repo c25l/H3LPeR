@@ -1,8 +1,9 @@
-const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const logger = require('../logger');
+const SQLiteAdapter = require('./sqlite-adapter');
+const AzureSQLAdapter = require('./azure-sql-adapter');
 
 /**
  * DatabaseService - Centralized database for syncing articles, news, calendar, and journal
@@ -11,27 +12,54 @@ const logger = require('../logger');
  * - Change log for delta calculations
  * - Conflict detection and resolution
  * - History tracking for journal entries
+ * - Supports both SQLite (development) and Azure SQL Database (production)
  */
 class DatabaseService {
-  constructor(dbPath) {
-    this.dbPath = dbPath;
+  /**
+   * Create a DatabaseService instance
+   * @param {string|object} config - Either a file path (SQLite) or Azure SQL config object
+   * @param {string} type - 'sqlite' or 'azure' (defaults to 'sqlite')
+   */
+  constructor(config, type = 'sqlite') {
+    this.config = config;
+    this.type = type;
     this.db = null;
     this.init();
   }
 
   init() {
-    // Ensure database directory exists
-    const dir = path.dirname(this.dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+    if (this.type === 'azure') {
+      // Azure SQL Database
+      this.db = new AzureSQLAdapter(this.config);
+      logger.info('DatabaseService', 'Initializing Azure SQL Database connection');
+    } else {
+      // SQLite (default)
+      const dbPath = this.config;
+      
+      // Ensure database directory exists for SQLite
+      const dir = path.dirname(dbPath);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      
+      this.db = new SQLiteAdapter(dbPath);
+      logger.info('DatabaseService', `Initializing SQLite database at ${dbPath}`);
     }
-
-    this.db = new Database(this.dbPath);
-    this.db.pragma('journal_mode = WAL'); // Write-Ahead Logging for better concurrency
-    this.db.pragma('foreign_keys = ON');
     
-    this.createSchema();
-    logger.info('DatabaseService', `Database initialized at ${this.dbPath}`);
+    // Initialize connection (async for Azure, sync for SQLite)
+    const initPromise = this.db.init();
+    if (initPromise instanceof Promise) {
+      initPromise.then(() => {
+        this.createSchema();
+        logger.info('DatabaseService', 'Database initialized successfully');
+      }).catch(err => {
+        logger.error('DatabaseService', 'Database initialization failed', err);
+        throw err;
+      });
+    } else {
+      this.createSchema();
+      logger.info('DatabaseService', 'Database initialized successfully');
+    }
   }
 
   createSchema() {
@@ -44,7 +72,7 @@ class DatabaseService {
         operation TEXT NOT NULL, -- 'create', 'update', 'delete'
         version INTEGER NOT NULL,
         data TEXT, -- JSON data snapshot
-        created_at INTEGER NOT NULL, -- Unix timestamp in milliseconds
+        created_at BIGINT NOT NULL, -- Unix timestamp in milliseconds
         created_by TEXT DEFAULT 'system'
       );
       CREATE INDEX IF NOT EXISTS idx_change_log_entity ON change_log(entity_type, entity_id);
@@ -60,9 +88,9 @@ class DatabaseService {
         frontmatter TEXT, -- JSON frontmatter
         version INTEGER NOT NULL DEFAULT 1,
         hash TEXT, -- Content hash for conflict detection
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        synced_at INTEGER, -- Last sync with filesystem
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        synced_at BIGINT, -- Last sync with filesystem
         conflict_version TEXT -- If conflicted, stores the conflicting content
       );
       CREATE INDEX IF NOT EXISTS idx_journal_date ON journal_entries(date);
@@ -78,7 +106,7 @@ class DatabaseService {
         content TEXT NOT NULL,
         frontmatter TEXT,
         hash TEXT,
-        created_at INTEGER NOT NULL,
+        created_at BIGINT NOT NULL,
         FOREIGN KEY (entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE
       );
       CREATE INDEX IF NOT EXISTS idx_journal_history_entry ON journal_history(entry_id, version);
@@ -93,14 +121,14 @@ class DatabaseService {
         url TEXT,
         source TEXT NOT NULL,
         category TEXT, -- 'news', 'tech', 'science', etc.
-        published_at INTEGER, -- Article publication time
-        fetched_at INTEGER NOT NULL, -- When we fetched it
+        published_at BIGINT, -- Article publication time
+        fetched_at BIGINT NOT NULL, -- When we fetched it
         cluster_id TEXT, -- Group related articles
         rank INTEGER, -- AI-determined relevance rank
         content TEXT, -- Full article content if scraped
         version INTEGER NOT NULL DEFAULT 1,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_news_published ON news_articles(published_at);
       CREATE INDEX IF NOT EXISTS idx_news_fetched ON news_articles(fetched_at);
@@ -116,13 +144,13 @@ class DatabaseService {
         authors TEXT, -- JSON array
         abstract TEXT,
         url TEXT,
-        published_at INTEGER,
-        fetched_at INTEGER NOT NULL,
+        published_at BIGINT,
+        fetched_at BIGINT NOT NULL,
         categories TEXT, -- JSON array of categories
         rank INTEGER,
         version INTEGER NOT NULL DEFAULT 1,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL
       );
       CREATE INDEX IF NOT EXISTS idx_research_published ON research_articles(published_at);
       CREATE INDEX IF NOT EXISTS idx_research_fetched ON research_articles(fetched_at);
@@ -136,15 +164,15 @@ class DatabaseService {
         summary TEXT,
         description TEXT,
         location TEXT,
-        start_time INTEGER, -- Unix timestamp
-        end_time INTEGER,
+        start_time BIGINT, -- Unix timestamp
+        end_time BIGINT,
         all_day INTEGER DEFAULT 0, -- Boolean: 1 = all day event
         recurrence TEXT, -- JSON recurrence rules if any
         source TEXT DEFAULT 'google', -- 'google', 'manual', etc.
         version INTEGER NOT NULL DEFAULT 1,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        synced_at INTEGER
+        created_at BIGINT NOT NULL,
+        updated_at BIGINT NOT NULL,
+        synced_at BIGINT
       );
       CREATE INDEX IF NOT EXISTS idx_calendar_start ON calendar_events(start_time);
       CREATE INDEX IF NOT EXISTS idx_calendar_end ON calendar_events(end_time);
@@ -155,7 +183,7 @@ class DatabaseService {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS sync_state (
         source TEXT PRIMARY KEY, -- 'journal', 'news', 'calendar', 'research'
-        last_sync INTEGER NOT NULL, -- Unix timestamp
+        last_sync BIGINT NOT NULL, -- Unix timestamp
         last_version INTEGER NOT NULL DEFAULT 0,
         metadata TEXT -- JSON for additional state
       );

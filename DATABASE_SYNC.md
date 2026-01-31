@@ -223,6 +223,8 @@ Get changes in a time range.
 
 ### Conflict Management
 
+**Note:** Conflicts only occur for **journal entries** (markdown files that are synced bidirectionally between filesystem and database). News articles, research papers, and calendar events do not have conflicts because they are read-only data fetched from external sources. Duplicate articles are automatically deduplicated by their unique IDs.
+
 #### `GET /api/sync/conflicts`
 Get all journal entries with conflicts.
 
@@ -292,13 +294,13 @@ Get version history for a journal entry.
 Get journal entries from database in date range.
 
 #### `GET /api/sync/news?category=tech&since=<timestamp>&limit=100`
-Get news articles from database.
+Get news articles from database. Articles are automatically deduplicated by ID - if the same article is fetched multiple times, only one copy is stored with the latest version.
 
 #### `GET /api/sync/research?since=<timestamp>&limit=100`
-Get research articles from database.
+Get research articles from database. Articles are automatically deduplicated by their arXiv ID or DOI.
 
 #### `GET /api/sync/calendar?startTime=<timestamp>&endTime=<timestamp>`
-Get calendar events from database.
+Get calendar events from database. Events are deduplicated by their Google Calendar event ID.
 
 ## Usage Examples
 

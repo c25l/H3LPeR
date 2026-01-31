@@ -334,13 +334,15 @@ const timeline = history.map(v => ({
 
 This implementation fully addresses all requirements:
 
-✅ **Database Communication** - SQLite with complete schema
-✅ **Sync for Articles** - Research papers automatically persisted
-✅ **Sync for News** - News articles automatically persisted
-✅ **Sync for Calendar** - Google Calendar events automatically persisted
+✅ **Database Communication** - SQLite with Azure SQL migration path
+✅ **Sync for Articles** - Research papers automatically persisted (deduplicated by ID)
+✅ **Sync for News** - News articles automatically persisted (deduplicated by ID)
+✅ **Sync for Calendar** - Google Calendar events automatically persisted (deduplicated by event ID)
 ✅ **Sync for Journal** - Bidirectional file-to-DB sync
 ✅ **Delta Over Time** - Change log with timestamp queries
-✅ **Conflict Management** - Detection, resolution, and API
+✅ **Conflict Management** - Detection, resolution, and API (journal entries only)
+
+**Note on Conflicts:** Conflicts only apply to journal entries because they are the only data synced bidirectionally between filesystem and database. News, research articles, and calendar events are read-only from external sources and are automatically deduplicated by their unique IDs (no conflicts possible).
 
 The system is production-ready with:
 - Comprehensive test coverage
@@ -349,11 +351,13 @@ The system is production-ready with:
 - Detailed documentation
 - Clean error handling
 - Minimal changes to existing code
+- **Azure SQL Database support** for production deployments
 
 The implementation enables users to:
 1. Track all changes over time with precise timestamps
 2. Query deltas between any two points in time
 3. View complete version history for journal entries
-4. Detect and resolve conflicts when simultaneous edits occur
-5. Persist all data (articles, news, calendar, journal) to database
+4. Detect and resolve conflicts when simultaneous edits occur (journal only)
+5. Persist all data (articles, news, calendar, journal) to database with automatic deduplication
 6. Maintain sync between filesystem and database automatically
+7. **Migrate from SQLite to Azure SQL Database** when ready for production
