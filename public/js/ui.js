@@ -239,11 +239,20 @@ export function setupWindowHandlers() {
   window.closeNewFileModal = closeNewFileModal;
   window.closeAllModals = closeAllModals;
 
-  // Help modal handler
+  // Help modal handlers
   const helpBtn = document.getElementById('help-btn');
+  const helpModal = document.getElementById('help-modal');
+  const helpCloseBtn = document.getElementById('help-modal-close');
+  
   if (helpBtn) {
     helpBtn.addEventListener('click', () => {
-      document.getElementById('help-modal').classList.remove('hidden');
+      helpModal.classList.remove('hidden');
+    });
+  }
+  
+  if (helpCloseBtn) {
+    helpCloseBtn.addEventListener('click', () => {
+      helpModal.classList.add('hidden');
     });
   }
 

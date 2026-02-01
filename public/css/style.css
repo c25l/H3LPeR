@@ -3150,6 +3150,7 @@ html, body {
 
 .help-modal-content td {
   padding: 0.5rem;
+  color: var(--text-secondary);
 }
 
 .help-modal-content kbd {
