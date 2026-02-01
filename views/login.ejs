@@ -69,7 +69,7 @@
 <body class="login-page">
   <div class="login-container">
     <h1>Welcome to H3LPeR</h1>
-    <p>Sign in with your Google account to continue</p>
+    
     <% if (error) { %>
       <div class="error-message">
         <% if (error === 'unauthorized_email') { %>
@@ -81,6 +81,40 @@
         <% } %>
       </div>
     <% } %>
+    
+    <!-- Simple password login form -->
+    <form id="login-form" style="margin-bottom: 1.5rem;">
+      <input 
+        type="text" 
+        name="username" 
+        placeholder="Username" 
+        required
+        style="width: 100%; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+      />
+      <input 
+        type="password" 
+        name="password" 
+        placeholder="Password" 
+        required
+        style="width: 100%; padding: 0.75rem; margin-bottom: 0.75rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;"
+      />
+      <button 
+        type="submit" 
+        class="btn-google" 
+        style="background: #007acc; color: white; border: none; margin-bottom: 1rem;"
+      >
+        Sign In
+      </button>
+    </form>
+
+    <div style="position: relative; margin: 1.5rem 0;">
+      <div style="border-top: 1px solid #ddd;"></div>
+      <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--bg-secondary); padding: 0 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+        or
+      </div>
+    </div>
+
+    <p style="margin-bottom: 1rem; font-size: 0.9rem; color: var(--text-secondary);">Sign in with your Google account</p>
     <a href="/api/login/google" class="btn-google">
       <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -91,5 +125,31 @@
       Sign in with Google
     </a>
   </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+          window.location.href = '/';
+        } else {
+          alert(result.error || 'Login failed');
+        }
+      } catch (error) {
+        alert('Login failed: ' + error.message);
+      }
+    });
+  </script>
 </body>
 </html>

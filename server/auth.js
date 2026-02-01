@@ -77,6 +77,54 @@ function setupAuth(app, config) {
     }
   });
 
+  // Simple password login (fallback when Google OAuth is not configured)
+  app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    
+    // Check rate limiting
+    const ip = req.ip;
+    const waitSeconds = isRateLimited(ip);
+    if (waitSeconds > 0) {
+      return res.status(429).json({ 
+        error: `Too many failed attempts. Please wait ${waitSeconds} seconds.` 
+      });
+    }
+
+    // Find user in config
+    const user = config.users && config.users.find(u => u.username === username);
+    
+    if (!user) {
+      recordFailedAttempt(ip);
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    // Verify password
+    const isValid = await verifyPassword(password, user.password);
+    
+    if (!isValid) {
+      recordFailedAttempt(ip);
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    // Clear rate limit on successful login
+    clearFailedAttempts(ip);
+
+    // Store authentication in session
+    req.session.authenticated = true;
+    req.session.userInfo = {
+      username: user.username,
+      name: user.name || user.username
+    };
+
+    req.session.save((err) => {
+      if (err) {
+        console.error('Session save error:', err);
+        return res.status(500).json({ error: 'Session error' });
+      }
+      res.json({ success: true });
+    });
+  });
+
   // Google OAuth callback
   app.get('/api/auth/google/callback', async (req, res) => {
     const googleAuth = req.app.locals.googleAuth;
