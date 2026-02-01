@@ -3093,6 +3093,33 @@ html, body {
   padding: 1.5rem;
 }
 
+.help-modal-content .modal-intro {
+  font-size: 1.1em;
+  margin-bottom: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.help-modal-content .modal-section {
+  margin: 1.5rem 0;
+}
+
+.help-modal-content .modal-info-box {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(86, 156, 214, 0.1);
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+}
+
+.help-modal-content .modal-info-box p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.help-modal-content .modal-info-box a {
+  color: var(--accent);
+}
+
 .help-modal-content h3 {
   margin-top: 2rem;
 }
@@ -3139,6 +3166,6 @@ html, body {
   margin-right: 0.5rem;
 }
 
-.tab-nav .btn-link:last-child {
+.tab-nav #help-btn {
   margin-right: 1rem;
 }
