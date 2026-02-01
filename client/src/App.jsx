@@ -81,19 +81,19 @@ function AppContent() {
     setLoading(true);
     try {
       if (activeTab === 'weather' && !weatherData) {
-        const response = await fetch('/api/weather');
+        const response = await fetch('/api/helper/weather');
         if (response.ok) {
           const data = await response.json();
           setWeatherData(data);
         }
       } else if (activeTab === 'news' && !newsData) {
-        const response = await fetch('/api/news');
+        const response = await fetch('/api/helper/news');
         if (response.ok) {
           const data = await response.json();
           setNewsData(data);
         }
       } else if (activeTab === 'research' && !researchData) {
-        const response = await fetch('/api/research');
+        const response = await fetch('/api/helper/research');
         if (response.ok) {
           const data = await response.json();
           setResearchData(data);
