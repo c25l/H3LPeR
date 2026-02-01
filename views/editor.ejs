@@ -46,21 +46,21 @@
     <button class="tab-btn" data-tab="news" id="news-tab-btn">News</button>
     <button class="tab-btn" data-tab="research" id="research-tab-btn">Research</button>
     <div class="tab-nav-spacer"></div>
-    <a href="https://mail.google.com" target="_blank" class="btn btn-link btn-sm email-indicator" id="email-indicator" title="Gmail" style="margin-right: 0.5rem;">
+    <a href="https://mail.google.com" target="_blank" class="btn btn-link btn-sm email-indicator" id="email-indicator" title="Gmail">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
         <polyline points="22,6 12,13 2,6"></polyline>
       </svg>
       <span id="unread-count" class="unread-badge hidden">0</span>
     </a>
-    <a href="/google-setup" class="btn btn-link btn-sm" style="margin-right: 0.5rem;" title="Google Integration">
+    <a href="/google-setup" class="btn btn-link btn-sm" title="Google Integration">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
         <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
         <line x1="12" y1="22.08" x2="12" y2="12"></line>
       </svg>
     </a>
-    <button class="btn btn-link btn-sm" id="help-btn" style="margin-right: 1rem;" title="Help & About">
+    <button class="btn btn-link btn-sm" id="help-btn" title="Help & About">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
         <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
@@ -328,12 +328,12 @@
 
   <!-- Help Modal -->
   <div id="help-modal" class="modal hidden">
-    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+    <div class="modal-content help-modal-content">
       <div class="modal-header">
         <h2>About H3LPeR</h2>
         <button class="modal-close" onclick="document.getElementById('help-modal').classList.add('hidden')">&times;</button>
       </div>
-      <div class="modal-body" style="padding: 1.5rem;">
+      <div class="modal-body">
         <p style="font-size: 1.1em; margin-bottom: 1.5rem; color: #888;">
           An Obsidian-like web journal with real-time data integrations, PWA support, and intelligent content processing.
         </p>
