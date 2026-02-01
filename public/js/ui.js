@@ -239,6 +239,14 @@ export function setupWindowHandlers() {
   window.closeNewFileModal = closeNewFileModal;
   window.closeAllModals = closeAllModals;
 
+  // Help modal handler
+  const helpBtn = document.getElementById('help-btn');
+  if (helpBtn) {
+    helpBtn.addEventListener('click', () => {
+      document.getElementById('help-modal').classList.remove('hidden');
+    });
+  }
+
   // Auth error handler
   window.handleGoogleAuthError = function (error) {
     if (error.needsAuth) {

@@ -53,13 +53,20 @@
       </svg>
       <span id="unread-count" class="unread-badge hidden">0</span>
     </a>
-    <a href="/google-setup" class="btn btn-link btn-sm" style="margin-right: 1rem;" title="Google Integration">
+    <a href="/google-setup" class="btn btn-link btn-sm" style="margin-right: 0.5rem;" title="Google Integration">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
         <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
         <line x1="12" y1="22.08" x2="12" y2="12"></line>
       </svg>
     </a>
+    <button class="btn btn-link btn-sm" id="help-btn" style="margin-right: 1rem;" title="Help & About">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+      </svg>
+    </button>
   </nav>
 
   <!-- Writer Tab -->
@@ -318,6 +325,120 @@
     </div>
   </div>
   <!-- End Research Tab -->
+
+  <!-- Help Modal -->
+  <div id="help-modal" class="modal hidden">
+    <div class="modal-content" style="max-width: 800px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2>About H3LPeR</h2>
+        <button class="modal-close" onclick="document.getElementById('help-modal').classList.add('hidden')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 1.5rem;">
+        <p style="font-size: 1.1em; margin-bottom: 1.5rem; color: #888;">
+          An Obsidian-like web journal with real-time data integrations, PWA support, and intelligent content processing.
+        </p>
+        
+        <h3>Why H3LPeR Over Static Markdown Files?</h3>
+        <p>H3LPeR offers significant advantages over generating static .md files once daily:</p>
+        
+        <div style="margin: 1.5rem 0;">
+          <h4>🔄 Real-Time, On-Demand Updates</h4>
+          <ul style="margin-left: 1.5rem; color: #888;">
+            <li><strong>Live Data Refresh</strong>: Click to get fresh weather, news, research instantly</li>
+            <li><strong>Auto-Updates</strong>: News refreshes every 6 hours, research every 24 hours</li>
+            <li><strong>Calendar Integration</strong>: Google Calendar events update in real-time</li>
+            <li><strong>Email Notifications</strong>: Live unread count from Gmail</li>
+          </ul>
+        </div>
+
+        <div style="margin: 1.5rem 0;">
+          <h4>🤖 Intelligent Content Processing</h4>
+          <ul style="margin-left: 1.5rem; color: #888;">
+            <li><strong>AI News Clustering</strong>: Groups similar stories with OpenAI embeddings</li>
+            <li><strong>Delta Processing</strong>: Only processes new articles, saving API costs</li>
+            <li><strong>Research Ranking</strong>: Claude AI ranks arXiv papers by relevance</li>
+            <li><strong>Smart Updates</strong>: Continuous processing throughout the day</li>
+          </ul>
+        </div>
+
+        <div style="margin: 1.5rem 0;">
+          <h4>📱 Offline-First PWA</h4>
+          <ul style="margin-left: 1.5rem; color: #888;">
+            <li><strong>Works Offline</strong>: Edit notes without connectivity</li>
+            <li><strong>Auto-Sync</strong>: Changes sync when you're back online</li>
+            <li><strong>Conflict Resolution</strong>: Detects and helps resolve conflicts</li>
+            <li><strong>Native Feel</strong>: Install as desktop or mobile app</li>
+          </ul>
+        </div>
+
+        <div style="margin: 1.5rem 0;">
+          <h4>🔗 Bi-Directional Integrations</h4>
+          <ul style="margin-left: 1.5rem; color: #888;">
+            <li><strong>Google Calendar</strong>: View and inject agendas into journal entries</li>
+            <li><strong>Gmail</strong>: See unread counts, read emails</li>
+            <li><strong>Google Tasks</strong>: Manage tasks alongside notes</li>
+            <li><strong>File System</strong>: Syncs with actual markdown files on disk</li>
+          </ul>
+        </div>
+
+        <div style="margin: 1.5rem 0;">
+          <h4>✏️ Live Editing & Preview</h4>
+          <ul style="margin-left: 1.5rem; color: #888;">
+            <li><strong>Rich Editor</strong>: Syntax highlighting, vim/emacs keybindings</li>
+            <li><strong>Wiki-Links</strong>: [[link to files]], backlinks panel</li>
+            <li><strong>Multi-Buffer</strong>: Open multiple files in tabs</li>
+            <li><strong>Auto-Save</strong>: Changes save as you type</li>
+          </ul>
+        </div>
+
+        <div style="margin: 1.5rem 0;">
+          <h4>🌐 Web-Based Accessibility</h4>
+          <ul style="margin-left: 1.5rem; color: #888;">
+            <li><strong>Access Anywhere</strong>: Any device with a browser</li>
+            <li><strong>Cross-Platform</strong>: Windows, Mac, Linux, iOS, Android</li>
+            <li><strong>Mobile-Responsive</strong>: Optimized for phones and tablets</li>
+            <li><strong>Low Storage</strong>: Server holds the vault, clients cache as needed</li>
+          </ul>
+        </div>
+
+        <h3 style="margin-top: 2rem;">Keyboard Shortcuts</h3>
+        <table style="width: 100%; border-collapse: collapse; margin: 1rem 0;">
+          <tr style="border-bottom: 1px solid #444;">
+            <td style="padding: 0.5rem;"><kbd>Ctrl+P</kbd> / <kbd>Cmd+P</kbd></td>
+            <td style="padding: 0.5rem; color: #888;">Quick file switcher</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #444;">
+            <td style="padding: 0.5rem;"><kbd>Ctrl+S</kbd> / <kbd>Cmd+S</kbd></td>
+            <td style="padding: 0.5rem; color: #888;">Save file</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #444;">
+            <td style="padding: 0.5rem;"><kbd>Ctrl+B</kbd> / <kbd>Cmd+B</kbd></td>
+            <td style="padding: 0.5rem; color: #888;">Toggle sidebar</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #444;">
+            <td style="padding: 0.5rem;"><kbd>Ctrl+N</kbd> / <kbd>Cmd+N</kbd></td>
+            <td style="padding: 0.5rem; color: #888;">New file</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #444;">
+            <td style="padding: 0.5rem;"><kbd>Ctrl+K</kbd> / <kbd>Cmd+K</kbd></td>
+            <td style="padding: 0.5rem; color: #888;">Insert link</td>
+          </tr>
+          <tr>
+            <td style="padding: 0.5rem;"><kbd>Alt+Left/Right</kbd></td>
+            <td style="padding: 0.5rem; color: #888;">Navigate history</td>
+          </tr>
+        </table>
+
+        <div style="margin-top: 2rem; padding: 1rem; background: rgba(86, 156, 214, 0.1); border-left: 3px solid #569cd6; border-radius: 4px;">
+          <p style="margin: 0; color: #888;">
+            <strong>Learn More:</strong> See the 
+            <a href="https://github.com/c25l/H3LPeR" target="_blank" style="color: #569cd6;">GitHub repository</a> 
+            for full documentation and setup instructions.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Pass data to JS -->
   <script>
