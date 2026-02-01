@@ -30,9 +30,16 @@ router.get('/google-setup', (req, res) => {
 // Main editor page
 router.get('/', async (req, res) => {
   try {
+    const distPath = require('path').join(__dirname, '../../dist/index.html');
+    const fs = require('fs');
+    
+    // If React build exists, serve it
+    if (fs.existsSync(distPath)) {
+      return res.sendFile(distPath);
+    }
+    
+    // Otherwise fall back to EJS template
     const vault = req.app.locals.vault;
-
-    // Get file tree
     const files = await vault.getTree();
 
     res.render('editor', {
@@ -47,6 +54,15 @@ router.get('/', async (req, res) => {
 // Open specific file
 router.get('/edit/*', async (req, res) => {
   try {
+    const distPath = require('path').join(__dirname, '../../dist/index.html');
+    const fs = require('fs');
+    
+    // If React build exists, serve it (React will handle routing)
+    if (fs.existsSync(distPath)) {
+      return res.sendFile(distPath);
+    }
+    
+    // Otherwise fall back to EJS template
     const vault = req.app.locals.vault;
     const filePath = req.params[0];
 

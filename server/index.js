@@ -35,7 +35,15 @@ app.locals.googleAuth = googleAuth;
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
+
+// Serve static files from React build (if exists) or fallback to public
+const distPath = path.join(__dirname, '../dist');
+const publicPath = path.join(__dirname, '../public');
+if (fs.existsSync(distPath)) {
+  app.use(express.static(distPath));
+} else {
+  app.use(express.static(publicPath));
+}
 
 // Session
 app.use(session({
