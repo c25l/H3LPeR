@@ -82,6 +82,15 @@ const embeddingsService = new EmbeddingsService(config);
 setupHelperRoutes(config, embeddingsService);
 
 // Google OAuth routes (must be before authMiddleware)
+app.get('/api/auth/google/status', authMiddleware, (req, res) => {
+  const googleAuth = req.app.locals.googleAuth;
+  res.json({
+    authenticated: googleAuth.isAuthenticated(),
+    hasCredentials: googleAuth.hasCredentials(),
+    user: googleAuth.getUserInfo()
+  });
+});
+
 app.get('/api/auth/google/setup', authMiddleware, async (req, res) => {
   try {
     await googleAuth.setupCredentials();
