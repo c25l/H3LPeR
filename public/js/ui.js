@@ -244,15 +244,23 @@ export function setupWindowHandlers() {
   const helpModal = document.getElementById('help-modal');
   const helpCloseBtn = document.getElementById('help-modal-close');
   
-  if (helpBtn) {
+  if (helpBtn && helpModal) {
     helpBtn.addEventListener('click', () => {
       helpModal.classList.remove('hidden');
+      // Set focus to close button for keyboard accessibility
+      if (helpCloseBtn) {
+        helpCloseBtn.focus();
+      }
     });
   }
   
-  if (helpCloseBtn) {
+  if (helpCloseBtn && helpModal) {
     helpCloseBtn.addEventListener('click', () => {
       helpModal.classList.add('hidden');
+      // Return focus to help button
+      if (helpBtn) {
+        helpBtn.focus();
+      }
     });
   }
 
