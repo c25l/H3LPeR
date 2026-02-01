@@ -81,7 +81,10 @@ function AppContent() {
     setLoading(true);
     try {
       if (activeTab === 'weather' && !weatherData) {
-        const response = await fetch('/api/helper/weather');
+        // Default to Longmont, CO coordinates if not specified
+        const lat = 40.1672;
+        const lon = -105.1019;
+        const response = await fetch(`/api/helper/weather?lat=${lat}&lon=${lon}`);
         if (response.ok) {
           const data = await response.json();
           setWeatherData(data);
@@ -255,7 +258,29 @@ function AppContent() {
             {loading ? (
               <p>Loading weather data...</p>
             ) : weatherData ? (
-              <div dangerouslySetInnerHTML={{ __html: weatherData.html || '<pre>' + JSON.stringify(weatherData, null, 2) + '</pre>' }} />
+              <div>
+                {weatherData.local && (
+                  <div style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px' }}>
+                    <h3>Local Weather</h3>
+                    <p><strong>Temperature:</strong> {weatherData.local.temp}°F (Feels like {weatherData.local.feels_like}°F)</p>
+                    <p><strong>Conditions:</strong> {weatherData.local.description}</p>
+                    <p><strong>Humidity:</strong> {weatherData.local.humidity}%</p>
+                    <p><strong>Wind:</strong> {weatherData.local.wind_speed} mph</p>
+                  </div>
+                )}
+                {weatherData.space && (
+                  <div style={{ padding: '15px', background: '#2d2d2d', borderRadius: '5px' }}>
+                    <h3>Space Weather</h3>
+                    <p><strong>Solar Wind Speed:</strong> {weatherData.space.solarWind?.speed || 'N/A'} km/s</p>
+                    <p><strong>K-Index:</strong> {weatherData.space.kIndex || 'N/A'}</p>
+                  </div>
+                )}
+                {!weatherData.local && !weatherData.space && (
+                  <pre style={{ background: '#2d2d2d', padding: '15px', borderRadius: '5px', overflow: 'auto' }}>
+                    {JSON.stringify(weatherData, null, 2)}
+                  </pre>
+                )}
+              </div>
             ) : (
               <p>Weather data will load automatically...</p>
             )}
@@ -268,7 +293,73 @@ function AppContent() {
             {loading ? (
               <p>Loading news...</p>
             ) : newsData ? (
-              <div dangerouslySetInnerHTML={{ __html: newsData.html || '<pre>' + JSON.stringify(newsData, null, 2) + '</pre>' }} />
+              <div>
+                {newsData.continuingStories && newsData.continuingStories.length > 0 && (
+                  <div style={{ marginBottom: '30px' }}>
+                    <h3 style={{ borderBottom: '2px solid #007acc', paddingBottom: '10px' }}>Continuing Stories</h3>
+                    {newsData.continuingStories.map((story, idx) => (
+                      <div key={idx} style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #007acc' }}>
+                        <h4 style={{ marginTop: 0, color: '#569cd6' }}>{story.summary || 'Story ' + (idx + 1)}</h4>
+                        <p style={{ fontSize: '0.9em', color: '#888' }}>{story.articles?.length || 0} articles</p>
+                        {story.articles && story.articles.slice(0, 3).map((article, aIdx) => (
+                          <div key={aIdx} style={{ marginLeft: '15px', marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #555' }}>
+                            <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#9cdcfe', textDecoration: 'none' }}>
+                              {article.title}
+                            </a>
+                            <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '10px' }}>
+                              - {article.source}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {newsData.newStories && newsData.newStories.length > 0 && (
+                  <div style={{ marginBottom: '30px' }}>
+                    <h3 style={{ borderBottom: '2px solid #4ec9b0', paddingBottom: '10px' }}>New Stories</h3>
+                    {newsData.newStories.map((story, idx) => (
+                      <div key={idx} style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #4ec9b0' }}>
+                        <h4 style={{ marginTop: 0, color: '#4ec9b0' }}>{story.summary || 'Story ' + (idx + 1)}</h4>
+                        <p style={{ fontSize: '0.9em', color: '#888' }}>{story.articles?.length || 0} articles</p>
+                        {story.articles && story.articles.slice(0, 3).map((article, aIdx) => (
+                          <div key={aIdx} style={{ marginLeft: '15px', marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #555' }}>
+                            <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#9cdcfe', textDecoration: 'none' }}>
+                              {article.title}
+                            </a>
+                            <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '10px' }}>
+                              - {article.source}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {newsData.techNews && newsData.techNews.length > 0 && (
+                  <div>
+                    <h3 style={{ borderBottom: '2px solid #c586c0', paddingBottom: '10px' }}>Tech News</h3>
+                    {newsData.techNews.slice(0, 10).map((article, idx) => (
+                      <div key={idx} style={{ marginBottom: '15px', padding: '12px', background: '#2d2d2d', borderRadius: '5px' }}>
+                        <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#c586c0', textDecoration: 'none', fontSize: '1.05em' }}>
+                          {article.title}
+                        </a>
+                        <p style={{ margin: '5px 0', fontSize: '0.85em', color: '#888' }}>
+                          {article.source} - {article.date ? new Date(article.date).toLocaleDateString() : 'Recent'}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(!newsData.continuingStories || newsData.continuingStories.length === 0) && 
+                 (!newsData.newStories || newsData.newStories.length === 0) && 
+                 (!newsData.techNews || newsData.techNews.length === 0) && (
+                  <p style={{ color: '#888' }}>No news stories available. News will be fetched on the next refresh cycle.</p>
+                )}
+              </div>
             ) : (
               <p>News will load automatically...</p>
             )}
@@ -281,7 +372,34 @@ function AppContent() {
             {loading ? (
               <p>Loading research papers...</p>
             ) : researchData ? (
-              <div dangerouslySetInnerHTML={{ __html: researchData.html || '<pre>' + JSON.stringify(researchData, null, 2) + '</pre>' }} />
+              <div>
+                {researchData.papers && researchData.papers.length > 0 ? (
+                  researchData.papers.map((paper, idx) => (
+                    <div key={idx} style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #ce9178' }}>
+                      <h4 style={{ marginTop: 0, color: '#ce9178' }}>
+                        <a href={paper.link} target="_blank" rel="noopener noreferrer" style={{ color: '#ce9178', textDecoration: 'none' }}>
+                          {paper.title}
+                        </a>
+                      </h4>
+                      {paper.authors && (
+                        <p style={{ fontSize: '0.9em', color: '#888', marginBottom: '8px' }}>
+                          {paper.authors}
+                        </p>
+                      )}
+                      {paper.summary && (
+                        <p style={{ fontSize: '0.95em', lineHeight: '1.5' }}>
+                          {paper.summary}
+                        </p>
+                      )}
+                      <p style={{ fontSize: '0.85em', color: '#888', marginTop: '10px' }}>
+                        {paper.date ? new Date(paper.date).toLocaleDateString() : 'Recent'} | {paper.category || 'arXiv'}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: '#888' }}>No research papers available. Papers will be fetched on the next refresh cycle.</p>
+                )}
+              </div>
             ) : (
               <p>Research papers will load automatically...</p>
             )}
