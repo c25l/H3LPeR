@@ -259,26 +259,70 @@ function AppContent() {
               <p>Loading weather data...</p>
             ) : weatherData ? (
               <div>
-                {weatherData.local && (
-                  <div style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px' }}>
-                    <h3>Local Weather</h3>
-                    <p><strong>Temperature:</strong> {weatherData.local.temp}°F (Feels like {weatherData.local.feels_like}°F)</p>
-                    <p><strong>Conditions:</strong> {weatherData.local.description}</p>
-                    <p><strong>Humidity:</strong> {weatherData.local.humidity}%</p>
-                    <p><strong>Wind:</strong> {weatherData.local.wind_speed} mph</p>
+                {weatherData.location && (
+                  <div style={{ marginBottom: '15px', color: '#888' }}>
+                    <strong>{weatherData.location.name}</strong>
                   </div>
                 )}
+                
+                {weatherData.local?.current && (
+                  <div style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px' }}>
+                    <h3>Current Conditions</h3>
+                    {weatherData.local.current.temperature !== null && (
+                      <p style={{ fontSize: '1.5em', margin: '10px 0' }}>
+                        <strong>{Math.round((weatherData.local.current.temperature * 9/5) + 32)}°F</strong>
+                      </p>
+                    )}
+                    {weatherData.local.current.description && (
+                      <p><strong>Conditions:</strong> {weatherData.local.current.description}</p>
+                    )}
+                    {weatherData.local.current.humidity !== null && (
+                      <p><strong>Humidity:</strong> {Math.round(weatherData.local.current.humidity)}%</p>
+                    )}
+                    {weatherData.local.current.windSpeed !== null && (
+                      <p><strong>Wind:</strong> {Math.round(weatherData.local.current.windSpeed * 0.621371)} mph</p>
+                    )}
+                  </div>
+                )}
+
+                {weatherData.local?.forecast && weatherData.local.forecast.length > 0 && (
+                  <div style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px' }}>
+                    <h3>Forecast</h3>
+                    {weatherData.local.forecast.slice(0, 3).map((period, idx) => (
+                      <div key={idx} style={{ marginBottom: '12px', paddingBottom: '12px', borderBottom: idx < 2 ? '1px solid #444' : 'none' }}>
+                        <h4 style={{ margin: '0 0 5px 0', color: '#569cd6' }}>{period.name}</h4>
+                        <p style={{ margin: '5px 0' }}>{period.temperature}°{period.temperatureUnit} - {period.shortForecast}</p>
+                        <p style={{ margin: '5px 0', fontSize: '0.9em', color: '#888' }}>Wind: {period.windSpeed} {period.windDirection}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {weatherData.space && (
                   <div style={{ padding: '15px', background: '#2d2d2d', borderRadius: '5px' }}>
                     <h3>Space Weather</h3>
-                    <p><strong>Solar Wind Speed:</strong> {weatherData.space.solarWind?.speed || 'N/A'} km/s</p>
-                    <p><strong>K-Index:</strong> {weatherData.space.kIndex || 'N/A'}</p>
+                    {weatherData.space.solarWind?.speed && (
+                      <p><strong>Solar Wind Speed:</strong> {weatherData.space.solarWind.speed} km/s</p>
+                    )}
+                    {weatherData.space.kIndex !== undefined && (
+                      <p><strong>K-Index:</strong> {weatherData.space.kIndex}</p>
+                    )}
+                    {weatherData.space.solarFlares && weatherData.space.solarFlares.length > 0 && (
+                      <p><strong>Recent Solar Flares:</strong> {weatherData.space.solarFlares.length}</p>
+                    )}
                   </div>
                 )}
-                {!weatherData.local && !weatherData.space && (
-                  <pre style={{ background: '#2d2d2d', padding: '15px', borderRadius: '5px', overflow: 'auto' }}>
-                    {JSON.stringify(weatherData, null, 2)}
-                  </pre>
+
+                {weatherData.severeAlerts && weatherData.severeAlerts.length > 0 && (
+                  <div style={{ marginTop: '20px', padding: '15px', background: '#3d1f1f', borderRadius: '5px', borderLeft: '3px solid #ff6b6b' }}>
+                    <h3 style={{ color: '#ff6b6b' }}>⚠️ Severe Weather Alerts</h3>
+                    {weatherData.severeAlerts.map((alert, idx) => (
+                      <div key={idx} style={{ marginBottom: '10px' }}>
+                        <strong>{alert.event}</strong>
+                        {alert.headline && <p style={{ fontSize: '0.9em', margin: '5px 0' }}>{alert.headline}</p>}
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (
@@ -297,44 +341,64 @@ function AppContent() {
                 {newsData.continuingStories && newsData.continuingStories.length > 0 && (
                   <div style={{ marginBottom: '30px' }}>
                     <h3 style={{ borderBottom: '2px solid #007acc', paddingBottom: '10px' }}>Continuing Stories</h3>
-                    {newsData.continuingStories.map((story, idx) => (
-                      <div key={idx} style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #007acc' }}>
-                        <h4 style={{ marginTop: 0, color: '#569cd6' }}>{story.summary || 'Story ' + (idx + 1)}</h4>
-                        <p style={{ fontSize: '0.9em', color: '#888' }}>{story.articles?.length || 0} articles</p>
-                        {story.articles && story.articles.slice(0, 3).map((article, aIdx) => (
-                          <div key={aIdx} style={{ marginLeft: '15px', marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #555' }}>
-                            <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#9cdcfe', textDecoration: 'none' }}>
-                              {article.title}
-                            </a>
-                            <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '10px' }}>
-                              - {article.source}
-                            </span>
+                    {newsData.continuingStories.map((story, idx) => {
+                      const firstArticle = story.articles && story.articles[0];
+                      const storyTitle = firstArticle ? firstArticle.title : (story.summary || `Story ${idx + 1}`);
+                      return (
+                        <details key={idx} style={{ marginBottom: '15px', padding: '12px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #007acc' }}>
+                          <summary style={{ cursor: 'pointer', fontWeight: 'bold', color: '#569cd6', marginBottom: '10px' }}>
+                            {storyTitle} ({story.articles?.length || 0} articles)
+                          </summary>
+                          <div style={{ marginTop: '10px' }}>
+                            {story.summary && story.summary !== storyTitle && (
+                              <p style={{ fontSize: '0.95em', marginBottom: '10px', color: '#ccc', fontStyle: 'italic' }}>{story.summary}</p>
+                            )}
+                            {story.articles && story.articles.map((article, aIdx) => (
+                              <div key={aIdx} style={{ marginLeft: '15px', marginTop: '8px', paddingLeft: '10px', borderLeft: '2px solid #555' }}>
+                                <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#9cdcfe', textDecoration: 'none' }}>
+                                  {article.title}
+                                </a>
+                                <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '10px' }}>
+                                  - {article.source}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ))}
+                        </details>
+                      );
+                    })}
                   </div>
                 )}
                 
                 {newsData.newStories && newsData.newStories.length > 0 && (
                   <div style={{ marginBottom: '30px' }}>
                     <h3 style={{ borderBottom: '2px solid #4ec9b0', paddingBottom: '10px' }}>New Stories</h3>
-                    {newsData.newStories.map((story, idx) => (
-                      <div key={idx} style={{ marginBottom: '20px', padding: '15px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #4ec9b0' }}>
-                        <h4 style={{ marginTop: 0, color: '#4ec9b0' }}>{story.summary || 'Story ' + (idx + 1)}</h4>
-                        <p style={{ fontSize: '0.9em', color: '#888' }}>{story.articles?.length || 0} articles</p>
-                        {story.articles && story.articles.slice(0, 3).map((article, aIdx) => (
-                          <div key={aIdx} style={{ marginLeft: '15px', marginTop: '10px', paddingLeft: '10px', borderLeft: '2px solid #555' }}>
-                            <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#9cdcfe', textDecoration: 'none' }}>
-                              {article.title}
-                            </a>
-                            <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '10px' }}>
-                              - {article.source}
-                            </span>
+                    {newsData.newStories.map((story, idx) => {
+                      const firstArticle = story.articles && story.articles[0];
+                      const storyTitle = firstArticle ? firstArticle.title : (story.summary || `Story ${idx + 1}`);
+                      return (
+                        <details key={idx} style={{ marginBottom: '15px', padding: '12px', background: '#2d2d2d', borderRadius: '5px', borderLeft: '3px solid #4ec9b0' }}>
+                          <summary style={{ cursor: 'pointer', fontWeight: 'bold', color: '#4ec9b0', marginBottom: '10px' }}>
+                            {storyTitle} ({story.articles?.length || 0} articles)
+                          </summary>
+                          <div style={{ marginTop: '10px' }}>
+                            {story.summary && story.summary !== storyTitle && (
+                              <p style={{ fontSize: '0.95em', marginBottom: '10px', color: '#ccc', fontStyle: 'italic' }}>{story.summary}</p>
+                            )}
+                            {story.articles && story.articles.map((article, aIdx) => (
+                              <div key={aIdx} style={{ marginLeft: '15px', marginTop: '8px', paddingLeft: '10px', borderLeft: '2px solid #555' }}>
+                                <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#9cdcfe', textDecoration: 'none' }}>
+                                  {article.title}
+                                </a>
+                                <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '10px' }}>
+                                  - {article.source}
+                                </span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    ))}
+                        </details>
+                      );
+                    })}
                   </div>
                 )}
 
@@ -342,12 +406,12 @@ function AppContent() {
                   <div>
                     <h3 style={{ borderBottom: '2px solid #c586c0', paddingBottom: '10px' }}>Tech News</h3>
                     {newsData.techNews.slice(0, 10).map((article, idx) => (
-                      <div key={idx} style={{ marginBottom: '15px', padding: '12px', background: '#2d2d2d', borderRadius: '5px' }}>
-                        <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#c586c0', textDecoration: 'none', fontSize: '1.05em' }}>
+                      <div key={idx} style={{ marginBottom: '12px', padding: '10px', background: '#2d2d2d', borderRadius: '5px' }}>
+                        <a href={article.link} target="_blank" rel="noopener noreferrer" style={{ color: '#c586c0', textDecoration: 'none', fontSize: '1.02em', fontWeight: '500' }}>
                           {article.title}
                         </a>
-                        <p style={{ margin: '5px 0', fontSize: '0.85em', color: '#888' }}>
-                          {article.source} - {article.date ? new Date(article.date).toLocaleDateString() : 'Recent'}
+                        <p style={{ margin: '5px 0 0 0', fontSize: '0.85em', color: '#888' }}>
+                          {article.source} {article.date && `- ${new Date(article.date).toLocaleDateString()}`}
                         </p>
                       </div>
                     ))}
