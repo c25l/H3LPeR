@@ -40152,4 +40152,4 @@ export {
   setEditorOptions,
   undo2 as undo
 };
-//# sourceMappingURL=editor.js.map
+//# sourceMappingURL=editor-bundle.js.map
