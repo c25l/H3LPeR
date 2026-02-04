@@ -93,8 +93,9 @@ export function renderUnifiedTabs() {
 async function switchToSpecialTab(tabId) {
   activeTabId = tabId;
   
-  // Hide editor area, show special content
+  // Get UI elements
   const editorContainer = document.querySelector('.editor-container');
+  const editorHeader = document.getElementById('editor-header');
   const backlinksPanel = document.getElementById('backlinks-panel');
   const specialContainers = [
     'calendar-content-container',
@@ -103,8 +104,9 @@ async function switchToSpecialTab(tabId) {
     'research-content-container'
   ];
   
-  // Hide editor and backlinks
+  // Hide editor, editor header, and backlinks for special tabs
   if (editorContainer) editorContainer.style.display = 'none';
+  if (editorHeader) editorHeader.style.display = 'none';
   if (backlinksPanel) backlinksPanel.style.display = 'none';
   
   // Hide all special containers first
@@ -121,6 +123,7 @@ async function switchToSpecialTab(tabId) {
   } else if (tabId === 'files') {
     // Just show the editor empty state
     if (editorContainer) editorContainer.style.display = 'block';
+    if (editorHeader) editorHeader.style.display = 'flex';
     if (backlinksPanel) backlinksPanel.style.display = 'block';
     document.getElementById('current-file-path').textContent = 'Select a file';
   } else if (tabId === 'calendar') {
@@ -169,8 +172,9 @@ async function switchToDocumentBuffer(bufferId) {
   const bufferManager = bufferManagerRef ? bufferManagerRef() : null;
   if (!bufferManager) return;
   
-  // Show editor area, hide special content
+  // Get UI elements
   const editorContainer = document.querySelector('.editor-container');
+  const editorHeader = document.getElementById('editor-header');
   const backlinksPanel = document.getElementById('backlinks-panel');
   const specialContainers = [
     'calendar-content-container',
@@ -179,8 +183,9 @@ async function switchToDocumentBuffer(bufferId) {
     'research-content-container'
   ];
   
-  // Show editor and backlinks
+  // Show editor, editor header, and backlinks for document buffers
   if (editorContainer) editorContainer.style.display = 'block';
+  if (editorHeader) editorHeader.style.display = 'flex';
   if (backlinksPanel) backlinksPanel.style.display = 'block';
   
   // Hide all special containers
