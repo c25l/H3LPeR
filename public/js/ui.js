@@ -265,20 +265,17 @@ export function setupWindowHandlers() {
       const messageEl = document.getElementById('auth-banner-message');
       messageEl.textContent = 'Google authentication required. Please reconnect your account.';
       banner.classList.remove('hidden');
-      // Disable tabs
-      document.getElementById('calendar-tab-btn').disabled = true;
-      document.getElementById('email-tab-btn').disabled = true;
-      // Switch back to writer
-      document.querySelector('.tab-btn[data-tab="writer"]').click();
     }
   };
 
   // Import file operations for window bindings
-  import('./file-manager.js').then(({ saveBufferAsFile, deleteCurrentFile, renameCurrentFile, createNewFile }) => {
+  import('./file-manager.js').then(({ saveBufferAsFile, deleteCurrentFile, renameCurrentFile, createNewFile, switchToBuffer, closeBuffer }) => {
     window.saveBufferAsFile = saveBufferAsFile;
     window.deleteCurrentFile = deleteCurrentFile;
     window.renameCurrentFile = renameCurrentFile;
     window.createNewFile = createNewFile;
+    window.switchToBuffer = switchToBuffer;
+    window.closeBuffer = closeBuffer;
   });
 
   // Import agenda for window binding

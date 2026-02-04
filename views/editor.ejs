@@ -28,32 +28,7 @@
     <button onclick="document.getElementById('google-auth-banner').classList.add('hidden')" class="btn btn-icon btn-sm">&times;</button>
   </div>
 
-  <!-- Tab Navigation -->
-  <nav class="tab-nav">
-    <button class="tab-btn" data-tab="calendar" id="calendar-tab-btn">Calendar</button>
-    <button class="tab-btn" data-tab="journal">Journal</button>
-    <button class="tab-btn active" data-tab="weather" id="weather-tab-btn">Weather</button>
-    <button class="tab-btn" data-tab="news" id="news-tab-btn">News</button>
-    <button class="tab-btn" data-tab="research" id="research-tab-btn">Research</button>
-    <div class="tab-nav-spacer"></div>
-    <a href="https://mail.google.com" target="_blank" class="btn btn-link btn-sm email-indicator" id="email-indicator" title="Gmail" style="margin-right: 0.5rem;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-        <polyline points="22,6 12,13 2,6"></polyline>
-      </svg>
-      <span id="unread-count" class="unread-badge hidden">0</span>
-    </a>
-    <a href="/google-setup" class="btn btn-link btn-sm" style="margin-right: 1rem;" title="Google Integration">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-        <line x1="12" y1="22.08" x2="12" y2="12"></line>
-      </svg>
-    </a>
-  </nav>
-
-  <!-- Journal Tab -->
-  <div class="tab-content" id="journal-tab">
+  <!-- Main App Container (no separate tab navigation) -->
   <div class="app-container">
     <!-- Sidebar -->
     <aside class="sidebar" id="app-sidebar">
@@ -86,7 +61,23 @@
             <span class="sync-indicator"></span>
             <span id="sync-text">Syncing...</span>
           </div>
-          <a href="/api/logout" class="btn btn-link">Logout</a>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <a href="https://mail.google.com" target="_blank" class="btn btn-link email-indicator" id="email-indicator" title="Gmail">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
+              </svg>
+              <span id="unread-count" class="unread-badge hidden">0</span>
+            </a>
+            <a href="/google-setup" class="btn btn-link" title="Google Integration">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </a>
+            <a href="/api/logout" class="btn btn-link">Logout</a>
+          </div>
         </div>
       </div>
     </aside>
@@ -198,6 +189,12 @@
         <div id="editor"></div>
       </div>
 
+      <!-- Special content containers (shown when special tabs are active) -->
+      <div id="calendar-content-container" class="special-content-container hidden"></div>
+      <div id="weather-content-container" class="special-content-container hidden"></div>
+      <div id="news-content-container" class="special-content-container hidden"></div>
+      <div id="research-content-container" class="special-content-container hidden"></div>
+
       <!-- Backlinks Panel (collapsible) -->
       <div class="backlinks-panel collapsed" id="backlinks-panel">
         <div class="backlinks-header" onclick="toggleBacklinks()">
@@ -248,107 +245,98 @@
         </div>
       </div>
     </div>
-  </div>
-  </div>
-  <!-- End Journal Tab -->
 
-  <!-- Calendar Tab -->
-  <div class="tab-content" id="calendar-tab">
-    <div class="calendar-tab-container">
-      <div class="calendar-tab-header">
-        <h2>Calendar & Tasks</h2>
-        <div class="calendar-controls">
-          <button id="refresh-calendar" class="btn btn-secondary" title="Refresh">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
-            Refresh
-          </button>
-          <button id="calendar-settings" class="btn btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M12 1v6m0 6v6m0-12l4 4m-4 4l4 4m-8-8l-4-4m4 4l-4 4"></path>
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="calendar-tab-main">
-        <aside class="calendar-sidebar">
-          <div id="calendar-selector-panel">
-            <h3>My Calendars</h3>
-            <div id="calendar-list" class="calendar-list"></div>
+    <!-- Hidden content containers for special tabs -->
+    <div id="calendar-content-container" class="hidden">
+      <div class="calendar-tab-container">
+        <div class="calendar-tab-header">
+          <h2>Calendar & Tasks</h2>
+          <div class="calendar-controls">
+            <button id="refresh-calendar" class="btn btn-secondary" title="Refresh">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Refresh
+            </button>
+            <button id="calendar-settings" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m0-12l4 4m-4 4l4 4m-8-8l-4-4m4 4l-4 4"></path>
+              </svg>
+            </button>
           </div>
-          <div id="tasks-panel" class="tasks-panel"></div>
-        </aside>
-        <div id="calendar-view" class="calendar-view"></div>
-      </div>
-    </div>
-  </div>
-  <!-- End Calendar Tab -->
-
-  <!-- Weather Tab -->
-  <div class="tab-content active" id="weather-tab">
-    <div class="helper-tab-container">
-      <div class="helper-tab-header">
-        <h2>Weather & Space Weather</h2>
-        <div class="helper-controls">
-          <button id="refresh-weather" class="btn btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
-            Refresh
-          </button>
+        </div>
+        <div class="calendar-tab-main">
+          <aside class="calendar-sidebar">
+            <div id="calendar-selector-panel">
+              <h3>My Calendars</h3>
+              <div id="calendar-list" class="calendar-list"></div>
+            </div>
+            <div id="tasks-panel" class="tasks-panel"></div>
+          </aside>
+          <div id="calendar-view" class="calendar-view"></div>
         </div>
       </div>
-      <div class="helper-tab-content" id="weather-content">
-        <div class="loading-spinner"></div>
-      </div>
     </div>
-  </div>
-  <!-- End Weather Tab -->
 
-  <!-- News Tab -->
-  <div class="tab-content" id="news-tab">
-    <div class="helper-tab-container">
-      <div class="helper-tab-header">
-        <h2>News & Stories</h2>
-        <div class="helper-controls">
-          <button id="refresh-news" class="btn btn-secondary">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
-            Refresh
-          </button>
+    <div id="weather-content-container" class="hidden">
+      <div class="helper-tab-container">
+        <div class="helper-tab-header">
+          <h2>Weather & Space Weather</h2>
+          <div class="helper-controls">
+            <button id="refresh-weather" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div class="helper-tab-content" id="weather-content">
+          <div class="loading-spinner"></div>
         </div>
       </div>
-      <div class="helper-tab-content" id="news-stories">
-        <div class="loading-spinner"></div>
-      </div>
-      <div class="stocks-ticker" id="stocks-ticker"></div>
     </div>
-  </div>
-  <!-- End News Tab -->
 
-  <!-- Research Tab -->
-  <div class="tab-content" id="research-tab">
-    <div class="helper-tab-container">
-      <div class="helper-tab-header">
-        <h2>Research Papers</h2>
-        <div class="helper-controls">
-          <select id="research-date">
-            <option value="">Today</option>
-          </select>
+    <div id="news-content-container" class="hidden">
+      <div class="helper-tab-container">
+        <div class="helper-tab-header">
+          <h2>News & Stories</h2>
+          <div class="helper-controls">
+            <button id="refresh-news" class="btn btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              Refresh
+            </button>
+          </div>
+        </div>
+        <div class="helper-tab-content" id="news-stories">
+          <div class="loading-spinner"></div>
+        </div>
+        <div class="stocks-ticker" id="stocks-ticker"></div>
+      </div>
+    </div>
+
+    <div id="research-content-container" class="hidden">
+      <div class="helper-tab-container">
+        <div class="helper-tab-header">
+          <h2>Research Papers</h2>
+          <div class="helper-controls">
+            <select id="research-date">
+              <option value="">Today</option>
+            </select>
+          </div>
+        </div>
+        <div class="helper-tab-content" id="research-content">
+          <div class="loading-spinner"></div>
         </div>
       </div>
-      <div class="helper-tab-content" id="research-content">
-        <div class="loading-spinner"></div>
-      </div>
     </div>
   </div>
-  <!-- End Research Tab -->
 
   <!-- Pass data to JS -->
   <script>

@@ -215,19 +215,8 @@ export async function checkGoogleAuth() {
     const response = await fetch('/api/google/status');
     const googleAuthStatus = await response.json();
 
-    // Enable/disable tabs based on auth
-    const calendarBtn = document.getElementById('calendar-tab-btn');
-    const emailBtn = document.getElementById('email-tab-btn');
-
-    if (googleAuthStatus.authenticated) {
-      calendarBtn.disabled = false;
-      emailBtn.disabled = false;
-    } else {
-      calendarBtn.disabled = true;
-      emailBtn.disabled = true;
-      calendarBtn.title = 'Connect Google account to use Calendar';
-      emailBtn.title = 'Connect Google account to use Email';
-    }
+    // No need to disable tabs anymore - tabs are always available
+    // Google auth is checked when actually using Calendar features
 
     return googleAuthStatus;
   } catch (error) {

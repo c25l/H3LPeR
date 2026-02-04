@@ -4,6 +4,7 @@ import { createBufferManager } from './buffer-manager.js';
 import { initTreeEditor } from './tree-editor.js';
 import { createSidebarManager, SIDEBAR_ICONS } from './sidebar-panels.js';
 import { initBufferMenu } from './buffer-menu.js';
+import { initUnifiedTabs, renderUnifiedTabs } from './unified-tabs.js';
 
 import {
   initFileManager, setDbInitialized, getCurrentFile, getIsDirty,
@@ -98,13 +99,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Expose buffer manager globally for buffer menu
   window.getBufferManager = getBufferManager;
-  window.renderBufferTabs = renderBufferTabs;
+  window.renderBufferTabs = renderUnifiedTabs; // Use unified tabs instead
+
+  // Initialize unified tab system
+  initUnifiedTabs({
+    getBufferManager,
+    onRender: () => renderUnifiedTabs()
+  });
 
   // Initialize modules
-  initFileManager({ getBufferManager, getTreeEditor, renderBufferTabs: () => renderBufferTabs(), getDbInitialized });
+  initFileManager({ getBufferManager, getTreeEditor, renderBufferTabs: () => renderUnifiedTabs(), getDbInitialized });
   setDbInitialized(dbInitialized);
   initTabManager({ saveFile, getIsDirty });
-  initSearchManager({ getDbInitialized, getBufferManager, renderBufferTabs: () => renderBufferTabs() });
+  initSearchManager({ getDbInitialized, getBufferManager, renderBufferTabs: () => renderUnifiedTabs() });
   initSyncManager(getDbInitialized);
   initUI({ getSidebarManager });
 
@@ -114,8 +121,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize email indicator
   initEmailIndicator();
 
-  // Initialize tab navigation
-  initTabs();
+  // No need to init old tabs - we're using unified tabs now
 
   // Initialize sidebar manager
   sidebarManager = createSidebarManager({
@@ -263,7 +269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('app-sidebar').classList.toggle('open');
   });
 
-  renderBufferTabs();
+  renderUnifiedTabs(); // Use unified tabs
 
   // Initialize keyboard shortcuts
   initKeyboardShortcuts();
@@ -280,21 +286,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Setup global window handlers
   setupWindowHandlers();
 
-  // Initialize active tab from URL (or default)
-  const urlTab = getTabFromUrl();
-  const initialTab = urlTab || getActiveTab();
-  await setActiveTab(initialTab, {
-    updateUrl: !urlTab,
-    replaceUrl: true,
-    skipDirtyCheck: true
-  });
-
-  // Load current file if any
+  // Load current file if any (this will trigger unified tabs rendering)
   const currentFile = window.APP_DATA?.currentFile || null;
   if (currentFile) {
     await loadFile(currentFile.path);
   } else {
     showEmptyState();
+    // Start with Files tab active by default
+    renderUnifiedTabs();
   }
 
   // Check for Google connection success
