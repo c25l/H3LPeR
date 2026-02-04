@@ -1,8 +1,6 @@
 // Unified Tab System - All tabs (special buffers + file buffers) in one place
 
 const SPECIAL_TABS = [
-  { id: 'calendar', label: 'Calendar', type: 'special', closeable: false },
-  { id: 'today', label: 'Today', type: 'special', closeable: false },
   { id: 'files', label: 'Files', type: 'special', closeable: false },
   { id: 'weather', label: 'Weather', type: 'special', closeable: false },
   { id: 'news', label: 'News', type: 'special', closeable: false },
@@ -103,7 +101,6 @@ async function switchToSpecialTab(tabId) {
   const editorHeader = document.getElementById('editor-header');
   const backlinksPanel = document.getElementById('backlinks-panel');
   const specialContainers = [
-    'calendar-content-container',
     'weather-content-container',
     'news-content-container',
     'research-content-container'
@@ -121,25 +118,12 @@ async function switchToSpecialTab(tabId) {
   });
   
   // Handle special tab actions
-  if (tabId === 'today') {
-    // Open today's journal entry as a document buffer
-    await openTodayNote();
-    return;
-  } else if (tabId === 'files') {
+  if (tabId === 'files') {
     // Just show the editor empty state
     if (editorContainer) editorContainer.style.display = 'block';
     if (editorHeader) editorHeader.style.display = 'flex';
     if (backlinksPanel) backlinksPanel.style.display = 'block';
     document.getElementById('current-file-path').textContent = 'Select a file';
-  } else if (tabId === 'calendar') {
-    const container = document.getElementById('calendar-content-container');
-    if (container) {
-      container.classList.remove('hidden');
-      // Initialize calendar tab
-      import('./calendar-tab.js').then(({ initCalendarTab }) => {
-        initCalendarTab().catch(err => console.error('Calendar init error:', err));
-      });
-    }
   } else if (tabId === 'weather') {
     const container = document.getElementById('weather-content-container');
     if (container) {
@@ -182,7 +166,6 @@ async function switchToDocumentBuffer(bufferId) {
   const editorHeader = document.getElementById('editor-header');
   const backlinksPanel = document.getElementById('backlinks-panel');
   const specialContainers = [
-    'calendar-content-container',
     'weather-content-container',
     'news-content-container',
     'research-content-container'
@@ -214,32 +197,6 @@ async function closeDocumentBuffer(bufferId) {
     await window.closeBuffer(bufferId);
   }
   renderUnifiedTabs();
-}
-
-// Open today's note
-async function openTodayNote() {
-  try {
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0];
-    
-    const response = await fetch(`/api/journal/${dateStr}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    if (!response.ok) throw new Error('Failed to open today note');
-    
-    const entry = await response.json();
-    
-    if (entry.path && window.openFile) {
-      await window.openFile(entry.path);
-      activeTabId = null; // Now showing document buffer
-      renderUnifiedTabs();
-    }
-  } catch (err) {
-    console.error('Error opening today note:', err);
-    alert('Failed to open today\'s note: ' + err.message);
-  }
 }
 
 // Get active tab ID

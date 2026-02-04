@@ -1,6 +1,6 @@
 // IndexedDB wrapper for Writer app
 const DB_NAME = 'WriterDB';
-const DB_VERSION = 3; // Incremented to add calendar caching
+const DB_VERSION = 4; // Incremented to remove calendar caching
 
 class WriterDB {
   constructor() {
@@ -50,11 +50,9 @@ class WriterDB {
           db.createObjectStore('metadata', { keyPath: 'key' });
         }
 
-        // Calendar data store
-        if (!db.objectStoreNames.contains('calendar')) {
-          const calendarStore = db.createObjectStore('calendar', { keyPath: 'id' });
-          calendarStore.createIndex('type', 'type', { unique: false });
-          calendarStore.createIndex('cachedAt', 'cachedAt', { unique: false });
+        // Remove calendar store if it exists (cleanup)
+        if (db.objectStoreNames.contains('calendar')) {
+          db.deleteObjectStore('calendar');
         }
 
         // Sync queue for offline operations
@@ -470,74 +468,6 @@ class WriterDB {
     } catch (err) {
       console.error('Sync from server failed:', err);
     }
-  }
-
-  // Calendar caching operations
-  async cacheCalendarData(type, data) {
-    if (!this.db) return;
-    return new Promise((resolve, reject) => {
-      try {
-        const tx = this.db.transaction('calendar', 'readwrite');
-        const store = tx.objectStore('calendar');
-        const item = {
-          id: type,
-          type: type,
-          data: data,
-          cachedAt: Date.now()
-        };
-        const request = store.put(item);
-        
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-        tx.onerror = () => reject(tx.error);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  async getCachedCalendarData(type) {
-    if (!this.db) return null;
-    return new Promise((resolve, reject) => {
-      try {
-        const tx = this.db.transaction('calendar', 'readonly');
-        const store = tx.objectStore('calendar');
-        const request = store.get(type);
-        
-        request.onsuccess = () => {
-          const result = request.result;
-          if (result) {
-            resolve({
-              data: result.data,
-              cachedAt: result.cachedAt
-            });
-          } else {
-            resolve(null);
-          }
-        };
-        request.onerror = () => reject(request.error);
-        tx.onerror = () => reject(tx.error);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  }
-
-  async clearCalendarCache() {
-    if (!this.db) return;
-    return new Promise((resolve, reject) => {
-      try {
-        const tx = this.db.transaction('calendar', 'readwrite');
-        const store = tx.objectStore('calendar');
-        const request = store.clear();
-        
-        request.onsuccess = () => resolve();
-        request.onerror = () => reject(request.error);
-        tx.onerror = () => reject(tx.error);
-      } catch (err) {
-        reject(err);
-      }
-    });
   }
 }
 
