@@ -22,7 +22,12 @@ export function initUnifiedTabs({ getBufferManager, onRender }) {
 // Render all tabs (special + document buffers)
 export function renderUnifiedTabs() {
   const container = document.getElementById('buffer-tabs');
-  if (!container) return;
+  if (!container) {
+    console.warn('buffer-tabs container not found, will retry...');
+    // Retry after a short delay in case DOM isn't ready
+    setTimeout(() => renderUnifiedTabs(), 100);
+    return;
+  }
 
   const bufferManager = bufferManagerRef ? bufferManagerRef() : null;
   const documentBuffers = bufferManager ? bufferManager.listBuffers() : [];

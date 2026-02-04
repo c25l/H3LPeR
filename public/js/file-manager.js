@@ -139,6 +139,13 @@ export function renderRecentFiles() {
 
 // Buffer tabs
 export function renderBufferTabs() {
+  // Delegate to the unified tabs renderer if available
+  if (renderBufferTabsRef) {
+    renderBufferTabsRef();
+    return;
+  }
+  
+  // Fallback to old implementation (shouldn't be used anymore)
   const bufferManager = bufferManagerRef();
   const container = document.getElementById('buffer-tabs');
   if (!container || !bufferManager) return;
