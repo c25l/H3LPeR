@@ -1,8 +1,6 @@
-const TAB_NAMES = ['calendar', 'journal', 'weather', 'news', 'research'];
+const TAB_NAMES = ['weather', 'news', 'research'];
 
 let activeTab = 'weather';
-let calendarTabInitialized = false;
-let emailTabInitialized = false;
 let weatherTabInitialized = false;
 let newsTabInitialized = false;
 let researchTabInitialized = false;
@@ -33,7 +31,6 @@ export async function setActiveTab(tabName, { updateUrl = false, replaceUrl = fa
   if (!TAB_NAMES.includes(tabName)) return;
 
   const needsInit =
-    (tabName === 'calendar' && !calendarTabInitialized) ||
     (tabName === 'weather' && !weatherTabInitialized) ||
     (tabName === 'news' && !newsTabInitialized) ||
     (tabName === 'research' && !researchTabInitialized);
@@ -44,10 +41,6 @@ export async function setActiveTab(tabName, { updateUrl = false, replaceUrl = fa
 
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
-
-  if (activeTab === 'journal' && isDirtyRef && isDirtyRef() && !skipDirtyCheck) {
-    await saveFileRef();
-  }
 
   tabBtns.forEach(b => b.classList.remove('active'));
   tabContents.forEach(c => c.classList.remove('active'));
@@ -64,10 +57,7 @@ export async function setActiveTab(tabName, { updateUrl = false, replaceUrl = fa
     updateUrlState(tabName, { replace: replaceUrl });
   }
 
-  if (tabName === 'calendar' && !calendarTabInitialized) {
-    await initCalendarTab();
-    calendarTabInitialized = true;
-  } else if (tabName === 'weather' && !weatherTabInitialized) {
+  if (tabName === 'weather' && !weatherTabInitialized) {
     await initWeatherTabModule();
     weatherTabInitialized = true;
   } else if (tabName === 'news' && !newsTabInitialized) {
@@ -92,27 +82,6 @@ export function initTabs() {
       await setActiveTab(tabName, { updateUrl: true });
     });
   });
-}
-
-// Lazy load calendar tab
-async function initCalendarTab() {
-  try {
-    const { initCalendarTab: init } = await import('./calendar-tab.js');
-    await init();
-  } catch (error) {
-    console.error('Error loading calendar tab:', error);
-    showAuthError('Failed to load calendar. Please try again.');
-  }
-}
-
-// Lazy load email indicator
-export async function initEmailIndicator() {
-  try {
-    const { initEmailIndicator: init } = await import('./email-tab.js');
-    await init();
-  } catch (error) {
-    console.error('Error loading email indicator:', error);
-  }
 }
 
 // Lazy load weather tab
@@ -166,15 +135,6 @@ async function initResearchTabModule() {
   }
 }
 
-// Show auth error banner
-function showAuthError(message) {
-  const banner = document.getElementById('google-auth-banner');
-  const messageEl = document.getElementById('auth-banner-message');
-
-  messageEl.textContent = message || 'Google authentication required. Please reconnect your account.';
-  banner.classList.remove('hidden');
-}
-
 // URL state helpers
 export function getFilePathFromUrl() {
   const match = window.location.pathname.match(/^\/edit\/(.+)$/);
@@ -191,7 +151,7 @@ export function buildUrlForState(tabName, pathOverride) {
   if (pathOverride) {
     url.pathname = pathOverride;
   }
-  if (tabName && tabName !== 'journal') {
+  if (tabName) {
     url.searchParams.set('tab', tabName);
   } else {
     url.searchParams.delete('tab');
@@ -209,18 +169,4 @@ export function updateUrlState(tabName, { path, replace = false } = {}) {
   }
 }
 
-// Check Google authentication status
-export async function checkGoogleAuth() {
-  try {
-    const response = await fetch('/api/google/status');
-    const googleAuthStatus = await response.json();
-
-    // No need to disable tabs anymore - tabs are always available
-    // Google auth is checked when actually using Calendar features
-
-    return googleAuthStatus;
-  } catch (error) {
-    console.error('Error checking Google auth:', error);
-    return null;
-  }
-}
+// Removed Google authentication - no longer needed

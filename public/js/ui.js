@@ -22,21 +22,8 @@ export function updateNavButtons() {
 
 // Show notification banner
 export function showNotification(message, type = 'info') {
-  const banner = document.getElementById('google-auth-banner');
-  const messageEl = document.getElementById('auth-banner-message');
-
-  messageEl.textContent = message;
-  banner.className = 'auth-banner';
-
-  if (type === 'success') {
-    banner.style.background = 'rgba(78, 201, 176, 0.1)';
-    banner.style.borderColor = '#4ec9b0';
-    banner.style.color = '#4ec9b0';
-  }
-
-  setTimeout(() => {
-    banner.classList.add('hidden');
-  }, 5000);
+  // For now, just log to console since we don't have a notification banner
+  console.log(`[${type.toUpperCase()}] ${message}`);
 }
 
 // Keyboard shortcuts
@@ -258,16 +245,6 @@ export function setupWindowHandlers() {
   window.closeNewFileModal = closeNewFileModal;
   window.closeAllModals = closeAllModals;
 
-  // Auth error handler
-  window.handleGoogleAuthError = function (error) {
-    if (error.needsAuth) {
-      const banner = document.getElementById('google-auth-banner');
-      const messageEl = document.getElementById('auth-banner-message');
-      messageEl.textContent = 'Google authentication required. Please reconnect your account.';
-      banner.classList.remove('hidden');
-    }
-  };
-
   // Import file operations for window bindings
   import('./file-manager.js').then(({ saveBufferAsFile, deleteCurrentFile, renameCurrentFile, createNewFile, switchToBuffer, closeBuffer }) => {
     window.saveBufferAsFile = saveBufferAsFile;
@@ -276,11 +253,6 @@ export function setupWindowHandlers() {
     window.createNewFile = createNewFile;
     window.switchToBuffer = switchToBuffer;
     window.closeBuffer = closeBuffer;
-  });
-
-  // Import agenda for window binding
-  import('./agenda.js').then(({ addTodayAgendaFromCalendar }) => {
-    window.addTodayAgendaFromCalendar = addTodayAgendaFromCalendar;
   });
 
   // Import conflict resolution for window binding

@@ -1,4 +1,3 @@
-import { initCalendar } from './calendar.js';
 import db from './db.js';
 import { createBufferManager } from './buffer-manager.js';
 import { initTreeEditor } from './tree-editor.js';
@@ -14,7 +13,7 @@ import {
 } from './file-manager.js';
 
 import {
-  initTabManager, initTabs, initEmailIndicator, checkGoogleAuth,
+  initTabManager, initTabs,
   setActiveTab, getActiveTab, getTabFromUrl, getFilePathFromUrl, updateUrlState
 } from './tab-manager.js';
 
@@ -115,12 +114,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   initSyncManager(getDbInitialized);
   initUI({ getSidebarManager });
 
-  // Check Google auth status
-  await checkGoogleAuth();
-
-  // Initialize email indicator
-  initEmailIndicator();
-
   // No need to init old tabs - we're using unified tabs now
 
   // No sidebar in this version - commented out
@@ -159,14 +152,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     showEmptyState();
     // Start with Files tab active by default
     renderUnifiedTabs();
-  }
-
-  // Check for Google connection success
-  const urlParams = new URLSearchParams(window.location.search);
-  if (urlParams.get('google_connected') === 'true') {
-    showNotification('Successfully connected to Google!', 'success');
-    const cleanedUrl = new URL(window.location.href);
-    cleanedUrl.searchParams.delete('google_connected');
-    window.history.replaceState({}, document.title, cleanedUrl.pathname + cleanedUrl.search);
   }
 });
