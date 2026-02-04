@@ -232,6 +232,25 @@ export function setupWindowHandlers() {
     }
   };
 
+  // Buffer menu
+  window.toggleBufferMenu = function () {
+    import('./buffer-menu.js').then(({ toggleBufferMenu }) => {
+      toggleBufferMenu();
+    });
+  };
+
+  window.openSpecialBuffer = function (bufferType) {
+    import('./buffer-menu.js').then(({ openSpecialBuffer }) => {
+      openSpecialBuffer(bufferType);
+    });
+  };
+
+  window.openBufferFromMenu = function (filePath) {
+    import('./buffer-menu.js').then(({ openBufferFromMenu }) => {
+      openBufferFromMenu(filePath);
+    });
+  };
+
   window.toggleBacklinks = function () {
     document.getElementById('backlinks-panel').classList.toggle('collapsed');
   };

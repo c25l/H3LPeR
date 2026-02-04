@@ -1,4 +1,4 @@
-const TAB_NAMES = ['calendar', 'writer', 'weather', 'news', 'research'];
+const TAB_NAMES = ['calendar', 'journal', 'weather', 'news', 'research'];
 
 let activeTab = 'weather';
 let calendarTabInitialized = false;
@@ -45,7 +45,7 @@ export async function setActiveTab(tabName, { updateUrl = false, replaceUrl = fa
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
 
-  if (activeTab === 'writer' && isDirtyRef && isDirtyRef() && !skipDirtyCheck) {
+  if (activeTab === 'journal' && isDirtyRef && isDirtyRef() && !skipDirtyCheck) {
     await saveFileRef();
   }
 
@@ -191,7 +191,7 @@ export function buildUrlForState(tabName, pathOverride) {
   if (pathOverride) {
     url.pathname = pathOverride;
   }
-  if (tabName && tabName !== 'writer') {
+  if (tabName && tabName !== 'journal') {
     url.searchParams.set('tab', tabName);
   } else {
     url.searchParams.delete('tab');

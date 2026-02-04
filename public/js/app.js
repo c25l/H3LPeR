@@ -3,6 +3,7 @@ import db from './db.js';
 import { createBufferManager } from './buffer-manager.js';
 import { initTreeEditor } from './tree-editor.js';
 import { createSidebarManager, SIDEBAR_ICONS } from './sidebar-panels.js';
+import { initBufferMenu } from './buffer-menu.js';
 
 import {
   initFileManager, setDbInitialized, getCurrentFile, getIsDirty,
@@ -94,6 +95,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const getBufferManager = () => bufferManager;
   const getTreeEditor = () => treeEditor;
   const getSidebarManager = () => sidebarManager;
+
+  // Expose buffer manager globally for buffer menu
+  window.getBufferManager = getBufferManager;
+  window.renderBufferTabs = renderBufferTabs;
 
   // Initialize modules
   initFileManager({ getBufferManager, getTreeEditor, renderBufferTabs: () => renderBufferTabs(), getDbInitialized });
@@ -262,6 +267,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Initialize keyboard shortcuts
   initKeyboardShortcuts();
+
+  // Initialize buffer menu
+  initBufferMenu();
 
   // Initialize modals
   initModals();

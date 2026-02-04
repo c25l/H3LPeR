@@ -21,6 +21,7 @@ const STATIC_ASSETS = [
   '/js/ui.js',
   '/js/db.js',
   '/js/buffer-manager.js',
+  '/js/buffer-menu.js',
   '/js/tree-editor.js',
   '/js/sidebar-panels.js',
   '/js/news-tab.js',

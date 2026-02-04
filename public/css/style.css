@@ -774,6 +774,82 @@ html, body {
   opacity: 0.6;
 }
 
+/* Buffer Menu */
+.buffer-menu-container {
+  position: relative;
+}
+
+.buffer-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  min-width: 220px;
+  max-width: 300px;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.buffer-menu.hidden {
+  display: none;
+}
+
+.buffer-menu-section {
+  border-bottom: 1px solid var(--border);
+  padding: 0.5rem 0;
+}
+
+.buffer-menu-section:last-child {
+  border-bottom: none;
+}
+
+.buffer-menu-section-title {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.buffer-menu-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+}
+
+.buffer-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.buffer-menu-item svg {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+}
+
+.buffer-menu-loading {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.buffer-menu-empty {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+
 .file-path {
   font-family: var(--font-mono);
   font-size: 0.875rem;
