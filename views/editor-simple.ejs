@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Public Whiteboard - H3LPeR</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#569cd6">
+  <meta name="description" content="Public whiteboard with weather, news, and research">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="H3LPeR">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/helper-tabs.css">
+</head>
+<body>
+  <!-- Main App Container -->
+  <div class="app-container no-sidebar">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-header-left">
+        <span class="app-title">H3LPeR - Public Whiteboard</span>
+      </div>
+      <div class="app-header-right">
+        <div id="sync-status" class="sync-status inline">
+          <span class="sync-indicator"></span>
+          <span id="sync-text">Synced</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Unified Buffer Tabs -->
+    <div class="buffer-tabs" id="buffer-tabs">
+      <div class="buffer-tab active" data-tab="whiteboard">
+        <span class="buffer-tab-label">Whiteboard</span>
+      </div>
+      <div class="buffer-tab" data-tab="weather">
+        <span class="buffer-tab-label">Weather</span>
+      </div>
+      <div class="buffer-tab" data-tab="news">
+        <span class="buffer-tab-label">News</span>
+      </div>
+      <div class="buffer-tab" data-tab="research">
+        <span class="buffer-tab-label">Research</span>
+      </div>
+      <div class="buffer-tab" data-tab="astronomy">
+        <span class="buffer-tab-label">Stars</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content full-width">
+      <!-- Whiteboard Content -->
+      <div id="whiteboard-content-container" class="special-content-container">
+        <div class="editor-header" style="padding: 8px 16px; border-bottom: 1px solid #374151;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 style="margin: 0; font-size: 16px;">Public Whiteboard</h2>
+            <div>
+              <button id="save-whiteboard" class="btn btn-secondary" style="margin-right: 8px;">Save</button>
+              <span id="save-status" style="color: #9ca3af;"></span>
+            </div>
+          </div>
+        </div>
+        <div class="editor-container">
+          <textarea id="whiteboard-editor" style="width: 100%; height: calc(100vh - 180px); padding: 16px; background: #1f2937; color: #e5e7eb; border: none; font-family: 'Courier New', monospace; font-size: 14px; resize: none;"><%= whiteboard.content %></textarea>
+        </div>
+      </div>
+
+      <!-- Weather Content -->
+      <div id="weather-content-container" class="special-content-container hidden">
+        <div class="helper-tab-container">
+          <div class="helper-tab-header">
+            <h2>Weather & Space Weather</h2>
+          </div>
+          <div class="helper-tab-content" id="weather-content">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- News Content -->
+      <div id="news-content-container" class="special-content-container hidden">
+        <div class="helper-tab-container">
+          <div class="helper-tab-header">
+            <h2>News</h2>
+          </div>
+          <div class="helper-tab-content" id="news-content">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Research Content -->
+      <div id="research-content-container" class="special-content-container hidden">
+        <div class="helper-tab-container">
+          <div class="helper-tab-header">
+            <h2>Research Papers</h2>
+          </div>
+          <div class="helper-tab-content" id="research-content">
+            <div class="loading-spinner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Astronomy Content -->
+      <div id="astronomy-content-container" class="special-content-container hidden">
+        <div class="helper-tab-container">
+          <div class="helper-tab-header">
+            <h2>Star Chart</h2>
+          </div>
+          <div class="helper-tab-content">
+            <div id="star-chart-container" style="height: calc(100vh - 180px);"></div>
+            <div id="orrery-container" style="height: 280px; margin-top: 20px;"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Simple scripts -->
+  <script>
+    // Tab switching
+    document.querySelectorAll('.buffer-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        
+        // Update active tab
+        document.querySelectorAll('.buffer-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show/hide content
+        document.querySelectorAll('.special-content-container').forEach(c => c.classList.add('hidden'));
+        document.getElementById(`${tabName}-content-container`).classList.remove('hidden');
+        
+        // Load content if needed
+        if (tabName === 'weather') loadWeather();
+        if (tabName === 'news') loadNews();
+        if (tabName === 'research') loadResearch();
+        if (tabName === 'astronomy') loadAstronomy();
+      });
+    });
+
+    // Whiteboard auto-save
+    let saveTimeout;
+    const editor = document.getElementById('whiteboard-editor');
+    const saveBtn = document.getElementById('save-whiteboard');
+    const saveStatus = document.getElementById('save-status');
+    
+    editor.addEventListener('input', () => {
+      saveStatus.textContent = 'Unsaved changes...';
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(saveWhiteboard, 2000);
+    });
+    
+    saveBtn.addEventListener('click', saveWhiteboard);
+    
+    async function saveWhiteboard() {
+      try {
+        const response = await fetch('/api/whiteboard', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: editor.value })
+        });
+        const data = await response.json();
+        if (data.success) {
+          saveStatus.textContent = 'Saved';
+          setTimeout(() => saveStatus.textContent = '', 2000);
+        }
+      } catch (error) {
+        saveStatus.textContent = 'Error saving';
+        console.error('Save error:', error);
+      }
+    }
+
+    // Load helper content functions
+    async function loadWeather() {
+      const container = document.getElementById('weather-content');
+      if (container.innerHTML.includes('loading-spinner')) {
+        try {
+          // Get user location
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(async (position) => {
+              const lat = position.coords.latitude;
+              const lon = position.coords.longitude;
+              const response = await fetch(`/api/helper/weather?lat=${lat}&lon=${lon}`);
+              const data = await response.json();
+              container.innerHTML = formatWeather(data);
+            }, () => {
+              container.innerHTML = '<p>Location permission denied. Weather requires location access.</p>';
+            });
+          }
+        } catch (error) {
+          container.innerHTML = '<p>Error loading weather</p>';
+        }
+      }
+    }
+
+    async function loadNews() {
+      const container = document.getElementById('news-content');
+      if (container.innerHTML.includes('loading-spinner')) {
+        try {
+          const response = await fetch('/api/helper/news');
+          const data = await response.json();
+          container.innerHTML = formatNews(data);
+        } catch (error) {
+          container.innerHTML = '<p>Error loading news</p>';
+        }
+      }
+    }
+
+    async function loadResearch() {
+      const container = document.getElementById('research-content');
+      if (container.innerHTML.includes('loading-spinner')) {
+        try {
+          const response = await fetch('/api/helper/research');
+          const data = await response.json();
+          container.innerHTML = formatResearch(data);
+        } catch (error) {
+          container.innerHTML = '<p>Error loading research</p>';
+        }
+      }
+    }
+
+    async function loadAstronomy() {
+      const container = document.getElementById('star-chart-container');
+      if (!container.hasChildNodes()) {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(async (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            // Load star chart module and initialize
+            import('/js/star-chart.js').then(module => {
+              module.initStarChart('star-chart-container', { lat, lon });
+            });
+          });
+        }
+      }
+    }
+
+    // Formatting helpers
+    function formatWeather(data) {
+      if (data.error) {
+        return `<div class="weather-info"><p>Error: ${data.error}</p></div>`;
+      }
+      
+      const local = data.local || {};
+      const location = data.location || {};
+      
+      let html = '<div class="weather-info">';
+      html += `<h3>${location.name || 'Weather'}</h3>`;
+      
+      if (local.current) {
+        html += '<div class="current-weather">';
+        html += `<p><strong>Temperature:</strong> ${local.current.temperature || 'N/A'}°${local.current.temperatureUnit || 'F'}</p>`;
+        html += `<p><strong>Conditions:</strong> ${local.current.shortForecast || 'N/A'}</p>`;
+        if (local.current.windSpeed) {
+          html += `<p><strong>Wind:</strong> ${local.current.windSpeed} ${local.current.windDirection || ''}</p>`;
+        }
+        if (local.current.relativeHumidity) {
+          html += `<p><strong>Humidity:</strong> ${local.current.relativeHumidity}%</p>`;
+        }
+        html += '</div>';
+      }
+      
+      if (data.severeAlerts && data.severeAlerts.length > 0) {
+        html += '<div class="severe-alerts" style="margin-top: 15px; padding: 10px; background: #fee; border-left: 3px solid #c00;">';
+        html += '<h4 style="margin: 0 0 10px 0; color: #c00;">⚠️ Severe Weather Alerts</h4>';
+        data.severeAlerts.forEach(alert => {
+          html += `<p><strong>${alert.event}</strong>: ${alert.headline}</p>`;
+        });
+        html += '</div>';
+      }
+      
+      if (data.space && !data.space.error) {
+        html += '<div class="space-weather" style="margin-top: 15px; padding: 10px; background: #f0f0f5; border-left: 3px solid #569cd6;">';
+        html += '<h4 style="margin: 0 0 10px 0;">🌌 Space Weather</h4>';
+        if (data.space.kpIndex !== undefined) {
+          html += `<p><strong>Kp Index:</strong> ${data.space.kpIndex} (${data.space.kpIndex >= 5 ? 'High' : 'Normal'})</p>`;
+        }
+        if (data.space.solarWind) {
+          html += `<p><strong>Solar Wind:</strong> ${data.space.solarWind.speed || 'N/A'} km/s</p>`;
+        }
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      return html;
+    }
+
+    function formatNews(data) {
+      // Handle the actual news structure from the API
+      if (!data) return '<p>No news available</p>';
+      
+      let html = '';
+      
+      // Continuing stories
+      if (data.continuingStories && data.continuingStories.length > 0) {
+        html += '<div class="news-section"><h3>📰 Continuing Stories</h3>';
+        data.continuingStories.forEach(story => {
+          html += '<div class="news-group" style="margin-bottom: 20px;">';
+          html += `<h4>${story.topic || 'News'}</h4>`;
+          if (story.articles && story.articles.length > 0) {
+            story.articles.forEach(article => {
+              html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+              html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+              html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+              html += '</div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      // New stories
+      if (data.newStories && data.newStories.length > 0) {
+        html += '<div class="news-section"><h3>🆕 New Stories</h3>';
+        data.newStories.forEach(story => {
+          html += '<div class="news-group" style="margin-bottom: 20px;">';
+          html += `<h4>${story.topic || 'News'}</h4>`;
+          if (story.articles && story.articles.length > 0) {
+            story.articles.forEach(article => {
+              html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+              html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+              html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+              html += '</div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      // Tech news
+      if (data.techNews && data.techNews.length > 0) {
+        html += '<div class="news-section"><h3>💻 Tech News</h3>';
+        data.techNews.forEach(article => {
+          html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+          html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+          html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      // New today
+      if (data.newToday && data.newToday.length > 0) {
+        html += '<div class="news-section"><h3>📅 New Today</h3>';
+        data.newToday.forEach(story => {
+          html += '<div class="news-group" style="margin-bottom: 20px;">';
+          html += `<h4>${story.topic || 'News'}</h4>`;
+          if (story.articles && story.articles.length > 0) {
+            story.articles.forEach(article => {
+              html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+              html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+              html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+              html += '</div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      if (html === '') {
+        html = '<p>No news available at the moment. News refreshes automatically every 6 hours.</p>';
+      }
+      
+      return html;
+    }
+
+    function formatResearch(data) {
+      if (!data || !data.papers) return '<p>No papers available</p>';
+      
+      let html = '<div class="research-list">';
+      data.papers.forEach(paper => {
+        html += '<div class="research-paper" style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #569cd6; background: #f5f5f5;">';
+        html += `<h3><a href="${paper.link}" target="_blank" style="color: #569cd6;">${paper.title}</a></h3>`;
+        if (paper.authors && paper.authors.length > 0) {
+          html += `<p><strong>Authors:</strong> ${paper.authors.join(', ')}</p>`;
+        }
+        if (paper.summary) {
+          html += `<p>${paper.summary}</p>`;
+        }
+        if (paper.published) {
+          html += `<p style="font-size: 0.9em; color: #999;">Published: ${new Date(paper.published).toLocaleDateString()}</p>`;
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      
+      return html;
+    }
+
+  </script>
+</body>
+</html>

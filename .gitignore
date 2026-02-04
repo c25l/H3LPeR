@@ -1,5 +1,6 @@
 node_modules/
-server/data
+server/data/*
+!server/data/*.json
 config.json
 .DS_Store
 *.log
