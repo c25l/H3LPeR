@@ -2,41 +2,30 @@
 
 ## Project Overview
 
-Obsidian-like web journal with PWA support, markdown editing, and integrations for calendar, email, weather, news, and research. Single-user app authenticated via Google OAuth.
+Public whiteboard with PWA support, markdown editing, and helper tabs for weather, news, research, and astronomy. No authentication required.
 
 ## Directory Structure
 
 ```
 writer/
-├── config.json              # App config (secrets, vault path, Google OAuth)
+├── config.json              # App config (secrets, API keys)
 ├── server/
 │   ├── index.js             # Express entry point, middleware, route registration
-│   ├── auth.js              # Session auth, Google OAuth login/logout routes
 │   ├── config.js            # Config loader
 │   ├── logger.js            # Structured logger (debug/info/warn/error with context)
-│   ├── auth/google.js       # Google OAuth2 client wrapper
 │   ├── middleware/
 │   │   └── error-handler.js # AppError class, asyncHandler wrapper, central errorHandler
 │   ├── routes/
-│   │   ├── api.js           # Core file CRUD, tree ops, journal, search, tags, backlinks
 │   │   ├── helper-api.js    # Weather, news, research, stocks, astronomy endpoints
-│   │   ├── google-api.js    # Calendar, Gmail, Tasks (requires Google auth)
-│   │   └── pages.js         # EJS page rendering (login, main app)
+│   │   └── pages.js         # EJS page rendering
 │   └── services/
-│       ├── vault.js         # File system abstraction (read/write/search/tree/watch)
 │       ├── news.js          # RSS aggregation, embedding-based clustering, Claude ranking
 │       ├── weather.js       # OpenWeatherMap + space weather
 │       ├── astronomy.js     # Star/planet/ISS positions
 │       ├── research.js      # arXiv paper fetching + AI ranking
 │       ├── embeddings.js    # OpenAI embeddings for clustering
 │       ├── claude.js        # Claude API client for ranking
-│       ├── gmail.js         # Gmail API wrapper
-│       ├── google-calendar.js
-│       ├── google-tasks.js
-│       ├── journal.js       # Daily journal entry creation
-│       ├── backlinks.js     # Wiki-link cross-reference index
 │       ├── stocks.js        # Stock quotes
-│       ├── restrictions.js  # Policy engine (readOnly, allowCreate, etc.)
 │       └── openai-responses.js  # Secondary AI ranker
 ├── public/
 │   ├── manifest.json        # PWA manifest
@@ -46,28 +35,17 @@ writer/
 │   │   └── helper-tabs.css  # Tab-specific styles
 │   └── js/
 │       ├── app.js           # Slim orchestrator - imports and initializes all modules
-│       ├── file-manager.js  # File CRUD, save/load, buffers, policy, recent files
-│       ├── tab-manager.js   # Tab switching, lazy-loading, Google auth check, URL state
-│       ├── search-manager.js # Search, tags, search-buffer emission
-│       ├── sync-manager.js  # Online/offline sync status indicator
-│       ├── conflict-manager.js # Conflict detection modal and resolution
-│       ├── agenda.js        # Calendar agenda parsing and markdown generation
-│       ├── ui.js            # Keyboard shortcuts, modals, quick switcher, nav history, window globals
-│       ├── editor.js        # CodeMirror integration, markdown extensions, KaTeX
+│       ├── tab-manager.js   # Tab switching, lazy-loading, URL state
+│       ├── ui.js            # Keyboard shortcuts, modals, nav history, window globals
 │       ├── buffer-manager.js # Multi-buffer (tab) state management
-│       ├── db.js            # IndexedDB wrapper (files, tags, calendar, syncQueue)
-│       ├── tree-editor.js   # File tree sidebar UI
-│       ├── sidebar-panels.js # Sidebar panel system (search, recent, files, tags, calendar)
-│       ├── calendar-tab.js  # Calendar tab (Google Calendar events)
+│       ├── buffer-menu.js   # Buffer menu UI
+│       ├── unified-tabs.js  # Unified tab system for special buffers + files
+│       ├── db.js            # IndexedDB wrapper (files, tags, syncQueue)
 │       ├── weather-tab.js   # Weather tab
 │       ├── news-tab.js      # News tab
 │       ├── research-tab.js  # Research tab
-│       ├── email-tab.js     # Email indicator badge
-│       ├── today-tab.js     # Today view
 │       ├── graph-tab.js     # Graph visualization
-│       ├── tasks-panel.js   # Google Tasks panel
-│       ├── star-chart.js    # Astronomy visualization
-│       └── backlinks.js     # Backlinks panel
+│       └── star-chart.js    # Astronomy visualization
 └── views/                   # EJS templates
 ```
 
