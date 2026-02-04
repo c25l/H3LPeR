@@ -74,9 +74,6 @@
         <div class="helper-tab-container">
           <div class="helper-tab-header">
             <h2>Weather & Space Weather</h2>
-            <div class="helper-controls">
-              <button id="refresh-weather" class="btn btn-secondary">Refresh</button>
-            </div>
           </div>
           <div class="helper-tab-content" id="weather-content">
             <div class="loading-spinner"></div>
@@ -89,9 +86,6 @@
         <div class="helper-tab-container">
           <div class="helper-tab-header">
             <h2>News</h2>
-            <div class="helper-controls">
-              <button id="refresh-news" class="btn btn-secondary">Refresh</button>
-            </div>
           </div>
           <div class="helper-tab-content" id="news-content">
             <div class="loading-spinner"></div>
@@ -104,9 +98,6 @@
         <div class="helper-tab-container">
           <div class="helper-tab-header">
             <h2>Research Papers</h2>
-            <div class="helper-controls">
-              <button id="refresh-research" class="btn btn-secondary">Refresh</button>
-            </div>
           </div>
           <div class="helper-tab-content" id="research-content">
             <div class="loading-spinner"></div>
@@ -119,9 +110,6 @@
         <div class="helper-tab-container">
           <div class="helper-tab-header">
             <h2>Star Chart</h2>
-            <div class="helper-controls">
-              <button id="refresh-astronomy" class="btn btn-secondary">Refresh</button>
-            </div>
           </div>
           <div class="helper-tab-content">
             <div id="star-chart-container" style="height: calc(100vh - 180px);"></div>
@@ -254,59 +242,159 @@
 
     // Formatting helpers
     function formatWeather(data) {
-      return `<div class="weather-info">
-        <h3>${data.location}</h3>
-        <p><strong>Temperature:</strong> ${data.temperature}°C</p>
-        <p><strong>Conditions:</strong> ${data.conditions}</p>
-      </div>`;
+      if (data.error) {
+        return `<div class="weather-info"><p>Error: ${data.error}</p></div>`;
+      }
+      
+      const local = data.local || {};
+      const location = data.location || {};
+      
+      let html = '<div class="weather-info">';
+      html += `<h3>${location.name || 'Weather'}</h3>`;
+      
+      if (local.current) {
+        html += '<div class="current-weather">';
+        html += `<p><strong>Temperature:</strong> ${local.current.temperature || 'N/A'}°${local.current.temperatureUnit || 'F'}</p>`;
+        html += `<p><strong>Conditions:</strong> ${local.current.shortForecast || 'N/A'}</p>`;
+        if (local.current.windSpeed) {
+          html += `<p><strong>Wind:</strong> ${local.current.windSpeed} ${local.current.windDirection || ''}</p>`;
+        }
+        if (local.current.relativeHumidity) {
+          html += `<p><strong>Humidity:</strong> ${local.current.relativeHumidity}%</p>`;
+        }
+        html += '</div>';
+      }
+      
+      if (data.severeAlerts && data.severeAlerts.length > 0) {
+        html += '<div class="severe-alerts" style="margin-top: 15px; padding: 10px; background: #fee; border-left: 3px solid #c00;">';
+        html += '<h4 style="margin: 0 0 10px 0; color: #c00;">⚠️ Severe Weather Alerts</h4>';
+        data.severeAlerts.forEach(alert => {
+          html += `<p><strong>${alert.event}</strong>: ${alert.headline}</p>`;
+        });
+        html += '</div>';
+      }
+      
+      if (data.space && !data.space.error) {
+        html += '<div class="space-weather" style="margin-top: 15px; padding: 10px; background: #f0f0f5; border-left: 3px solid #569cd6;">';
+        html += '<h4 style="margin: 0 0 10px 0;">🌌 Space Weather</h4>';
+        if (data.space.kpIndex !== undefined) {
+          html += `<p><strong>Kp Index:</strong> ${data.space.kpIndex} (${data.space.kpIndex >= 5 ? 'High' : 'Normal'})</p>`;
+        }
+        if (data.space.solarWind) {
+          html += `<p><strong>Solar Wind:</strong> ${data.space.solarWind.speed || 'N/A'} km/s</p>`;
+        }
+        html += '</div>';
+      }
+      
+      html += '</div>';
+      return html;
     }
 
     function formatNews(data) {
-      if (!data.groups) return '<p>No news available</p>';
-      return data.groups.map(group => `
-        <div class="news-group">
-          <h3>${group.topic || 'News'}</h3>
-          ${group.articles.map(article => `
-            <div class="news-article">
-              <a href="${article.link}" target="_blank">${article.title}</a>
-              <p>${article.pubDate}</p>
-            </div>
-          `).join('')}
-        </div>
-      `).join('');
+      // Handle the actual news structure from the API
+      if (!data) return '<p>No news available</p>';
+      
+      let html = '';
+      
+      // Continuing stories
+      if (data.continuingStories && data.continuingStories.length > 0) {
+        html += '<div class="news-section"><h3>📰 Continuing Stories</h3>';
+        data.continuingStories.forEach(story => {
+          html += '<div class="news-group" style="margin-bottom: 20px;">';
+          html += `<h4>${story.topic || 'News'}</h4>`;
+          if (story.articles && story.articles.length > 0) {
+            story.articles.forEach(article => {
+              html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+              html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+              html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+              html += '</div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      // New stories
+      if (data.newStories && data.newStories.length > 0) {
+        html += '<div class="news-section"><h3>🆕 New Stories</h3>';
+        data.newStories.forEach(story => {
+          html += '<div class="news-group" style="margin-bottom: 20px;">';
+          html += `<h4>${story.topic || 'News'}</h4>`;
+          if (story.articles && story.articles.length > 0) {
+            story.articles.forEach(article => {
+              html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+              html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+              html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+              html += '</div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      // Tech news
+      if (data.techNews && data.techNews.length > 0) {
+        html += '<div class="news-section"><h3>💻 Tech News</h3>';
+        data.techNews.forEach(article => {
+          html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+          html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+          html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      // New today
+      if (data.newToday && data.newToday.length > 0) {
+        html += '<div class="news-section"><h3>📅 New Today</h3>';
+        data.newToday.forEach(story => {
+          html += '<div class="news-group" style="margin-bottom: 20px;">';
+          html += `<h4>${story.topic || 'News'}</h4>`;
+          if (story.articles && story.articles.length > 0) {
+            story.articles.forEach(article => {
+              html += '<div class="news-article" style="margin-left: 15px; margin-bottom: 10px;">';
+              html += `<a href="${article.link}" target="_blank" style="color: #569cd6;">${article.title}</a>`;
+              html += `<p style="font-size: 0.9em; color: #999; margin: 2px 0;">${article.source} - ${new Date(article.pubDate).toLocaleDateString()}</p>`;
+              html += '</div>';
+            });
+          }
+          html += '</div>';
+        });
+        html += '</div>';
+      }
+      
+      if (html === '') {
+        html = '<p>No news available at the moment. News refreshes automatically every 6 hours.</p>';
+      }
+      
+      return html;
     }
 
     function formatResearch(data) {
-      if (!data.papers) return '<p>No papers available</p>';
-      return data.papers.map(paper => `
-        <div class="research-paper">
-          <h3><a href="${paper.link}" target="_blank">${paper.title}</a></h3>
-          <p><strong>Authors:</strong> ${paper.authors.join(', ')}</p>
-          <p>${paper.summary}</p>
-        </div>
-      `).join('');
+      if (!data || !data.papers) return '<p>No papers available</p>';
+      
+      let html = '<div class="research-list">';
+      data.papers.forEach(paper => {
+        html += '<div class="research-paper" style="margin-bottom: 20px; padding: 15px; border-left: 3px solid #569cd6; background: #f5f5f5;">';
+        html += `<h3><a href="${paper.link}" target="_blank" style="color: #569cd6;">${paper.title}</a></h3>`;
+        if (paper.authors && paper.authors.length > 0) {
+          html += `<p><strong>Authors:</strong> ${paper.authors.join(', ')}</p>`;
+        }
+        if (paper.summary) {
+          html += `<p>${paper.summary}</p>`;
+        }
+        if (paper.published) {
+          html += `<p style="font-size: 0.9em; color: #999;">Published: ${new Date(paper.published).toLocaleDateString()}</p>`;
+        }
+        html += '</div>';
+      });
+      html += '</div>';
+      
+      return html;
     }
 
-    // Refresh buttons
-    document.getElementById('refresh-weather').addEventListener('click', () => {
-      document.getElementById('weather-content').innerHTML = '<div class="loading-spinner"></div>';
-      loadWeather();
-    });
-    
-    document.getElementById('refresh-news').addEventListener('click', () => {
-      document.getElementById('news-content').innerHTML = '<div class="loading-spinner"></div>';
-      loadNews();
-    });
-    
-    document.getElementById('refresh-research').addEventListener('click', () => {
-      document.getElementById('research-content').innerHTML = '<div class="loading-spinner"></div>';
-      loadResearch();
-    });
-    
-    document.getElementById('refresh-astronomy').addEventListener('click', () => {
-      document.getElementById('star-chart-container').innerHTML = '';
-      loadAstronomy();
-    });
   </script>
 </body>
 </html>
