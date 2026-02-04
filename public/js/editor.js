@@ -40023,6 +40023,22 @@ var SlashCommand = Extension.create({
     ];
   }
 });
+var KeyboardShortcuts = Extension.create({
+  name: "keyboardShortcuts",
+  addKeyboardShortcuts() {
+    return {
+      "Mod-b": () => this.editor.chain().focus().toggleBold().run(),
+      "Mod-i": () => this.editor.chain().focus().toggleItalic().run(),
+      "Mod-k": () => {
+        const url = prompt("Enter URL:");
+        if (url) {
+          this.editor.chain().focus().setLink({ href: url }).run();
+        }
+        return true;
+      }
+    };
+  }
+});
 async function initEditor(container, content, onChange, onHistory) {
   onChangeCallback = onChange;
   onHistoryCallback = onHistory || null;
@@ -40059,7 +40075,8 @@ async function initEditor(container, content, onChange, onHistory) {
       WikiLink,
       TagHighlight,
       Transclusion,
-      SlashCommand
+      SlashCommand,
+      KeyboardShortcuts
     ],
     content: currentContent,
     editorProps: {
@@ -40068,7 +40085,7 @@ async function initEditor(container, content, onChange, onHistory) {
       }
     },
     onUpdate: ({ editor: editor2 }) => {
-      currentContent = editor2.storage.markdown.getMarkdown();
+      currentContent = editor2.getMarkdown();
       if (onChangeCallback) {
         onChangeCallback(currentContent);
       }
@@ -40082,23 +40099,6 @@ async function initEditor(container, content, onChange, onHistory) {
       if (currentContent) {
         editor2.commands.setContent(currentContent);
       }
-    }
-  });
-  editor.commands.setKeyboardShortcuts({
-    "Mod-b": () => editor.chain().focus().toggleBold().run(),
-    "Mod-i": () => editor.chain().focus().toggleItalic().run(),
-    "Mod-k": () => {
-      const url = prompt("Enter URL:");
-      if (url) {
-        editor.chain().focus().setLink({ href: url }).run();
-      }
-      return true;
-    },
-    "Alt-ArrowUp": () => {
-      return false;
-    },
-    "Alt-ArrowDown": () => {
-      return false;
     }
   });
 }
@@ -40115,7 +40115,7 @@ function getHistorySize() {
   return { undo: canUndo ? 1 : 0, redo: canRedo ? 1 : 0 };
 }
 function getContent() {
-  return editor ? editor.storage.markdown.getMarkdown() : currentContent;
+  return editor ? editor.getMarkdown() : currentContent;
 }
 function setContent2(content) {
   currentContent = content;

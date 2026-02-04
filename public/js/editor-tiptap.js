@@ -407,6 +407,25 @@ const SlashCommand = Extension.create({
   }
 });
 
+// Custom extension for keyboard shortcuts
+const KeyboardShortcuts = Extension.create({
+  name: 'keyboardShortcuts',
+
+  addKeyboardShortcuts() {
+    return {
+      'Mod-b': () => this.editor.chain().focus().toggleBold().run(),
+      'Mod-i': () => this.editor.chain().focus().toggleItalic().run(),
+      'Mod-k': () => {
+        const url = prompt('Enter URL:');
+        if (url) {
+          this.editor.chain().focus().setLink({ href: url }).run();
+        }
+        return true;
+      }
+    };
+  }
+});
+
 export async function initEditor(container, content, onChange, onHistory) {
   onChangeCallback = onChange;
   onHistoryCallback = onHistory || null;
@@ -449,7 +468,8 @@ export async function initEditor(container, content, onChange, onHistory) {
       WikiLink,
       TagHighlight,
       Transclusion,
-      SlashCommand
+      SlashCommand,
+      KeyboardShortcuts
     ],
     content: currentContent,
     editorProps: {
@@ -458,7 +478,7 @@ export async function initEditor(container, content, onChange, onHistory) {
       }
     },
     onUpdate: ({ editor }) => {
-      currentContent = editor.storage.markdown.getMarkdown();
+      currentContent = editor.getMarkdown();
       if (onChangeCallback) {
         onChangeCallback(currentContent);
       }
@@ -473,27 +493,6 @@ export async function initEditor(container, content, onChange, onHistory) {
       if (currentContent) {
         editor.commands.setContent(currentContent);
       }
-    }
-  });
-
-  // Set up keyboard shortcuts
-  editor.commands.setKeyboardShortcuts({
-    'Mod-b': () => editor.chain().focus().toggleBold().run(),
-    'Mod-i': () => editor.chain().focus().toggleItalic().run(),
-    'Mod-k': () => {
-      const url = prompt('Enter URL:');
-      if (url) {
-        editor.chain().focus().setLink({ href: url }).run();
-      }
-      return true;
-    },
-    'Alt-ArrowUp': () => {
-      // Move line up - not directly supported in Tiptap
-      return false;
-    },
-    'Alt-ArrowDown': () => {
-      // Move line down - not directly supported in Tiptap
-      return false;
     }
   });
 }
@@ -514,7 +513,7 @@ export function getHistorySize() {
 }
 
 export function getContent() {
-  return editor ? editor.storage.markdown.getMarkdown() : currentContent;
+  return editor ? editor.getMarkdown() : currentContent;
 }
 
 export function setContent(content) {
