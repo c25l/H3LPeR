@@ -127,29 +127,37 @@ async function switchToSpecialTab(tabId) {
     const container = document.getElementById('calendar-content-container');
     if (container) {
       container.classList.remove('hidden');
-      // Initialize calendar if needed
-      if (window.initCalendarTabIfNeeded) window.initCalendarTabIfNeeded();
+      // Initialize calendar tab
+      import('./calendar-tab.js').then(({ initCalendarTab }) => {
+        initCalendarTab().catch(err => console.error('Calendar init error:', err));
+      });
     }
   } else if (tabId === 'weather') {
     const container = document.getElementById('weather-content-container');
     if (container) {
       container.classList.remove('hidden');
-      // Initialize weather if needed
-      if (window.initWeatherTabIfNeeded) window.initWeatherTabIfNeeded();
+      // Initialize weather tab
+      import('./weather-tab.js').then(({ initWeatherTab }) => {
+        initWeatherTab().catch(err => console.error('Weather init error:', err));
+      });
     }
   } else if (tabId === 'news') {
     const container = document.getElementById('news-content-container');
     if (container) {
       container.classList.remove('hidden');
-      // Initialize news if needed
-      if (window.initNewsTabIfNeeded) window.initNewsTabIfNeeded();
+      // Initialize news tab
+      import('./news-tab.js').then(({ initNewsTab }) => {
+        initNewsTab().catch(err => console.error('News init error:', err));
+      });
     }
   } else if (tabId === 'research') {
     const container = document.getElementById('research-content-container');
     if (container) {
       container.classList.remove('hidden');
-      // Initialize research if needed
-      if (window.initResearchTabIfNeeded) window.initResearchTabIfNeeded();
+      // Initialize research tab
+      import('./research-tab.js').then(({ initResearchTab }) => {
+        initResearchTab().catch(err => console.error('Research init error:', err));
+      });
     }
   }
   
