@@ -1,4 +1,4 @@
-const TAB_NAMES = ['calendar', 'writer', 'weather', 'news', 'research'];
+const TAB_NAMES = ['calendar', 'journal', 'weather', 'news', 'research'];
 
 let activeTab = 'weather';
 let calendarTabInitialized = false;
@@ -45,7 +45,7 @@ export async function setActiveTab(tabName, { updateUrl = false, replaceUrl = fa
   const tabBtns = document.querySelectorAll('.tab-btn');
   const tabContents = document.querySelectorAll('.tab-content');
 
-  if (activeTab === 'writer' && isDirtyRef && isDirtyRef() && !skipDirtyCheck) {
+  if (activeTab === 'journal' && isDirtyRef && isDirtyRef() && !skipDirtyCheck) {
     await saveFileRef();
   }
 
@@ -191,7 +191,7 @@ export function buildUrlForState(tabName, pathOverride) {
   if (pathOverride) {
     url.pathname = pathOverride;
   }
-  if (tabName && tabName !== 'writer') {
+  if (tabName && tabName !== 'journal') {
     url.searchParams.set('tab', tabName);
   } else {
     url.searchParams.delete('tab');
@@ -215,19 +215,8 @@ export async function checkGoogleAuth() {
     const response = await fetch('/api/google/status');
     const googleAuthStatus = await response.json();
 
-    // Enable/disable tabs based on auth
-    const calendarBtn = document.getElementById('calendar-tab-btn');
-    const emailBtn = document.getElementById('email-tab-btn');
-
-    if (googleAuthStatus.authenticated) {
-      calendarBtn.disabled = false;
-      emailBtn.disabled = false;
-    } else {
-      calendarBtn.disabled = true;
-      emailBtn.disabled = true;
-      calendarBtn.title = 'Connect Google account to use Calendar';
-      emailBtn.title = 'Connect Google account to use Email';
-    }
+    // No need to disable tabs anymore - tabs are always available
+    // Google auth is checked when actually using Calendar features
 
     return googleAuthStatus;
   } catch (error) {

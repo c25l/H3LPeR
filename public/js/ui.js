@@ -232,6 +232,25 @@ export function setupWindowHandlers() {
     }
   };
 
+  // Buffer menu
+  window.toggleBufferMenu = function () {
+    import('./buffer-menu.js').then(({ toggleBufferMenu }) => {
+      toggleBufferMenu();
+    });
+  };
+
+  window.openSpecialBuffer = function (bufferType) {
+    import('./buffer-menu.js').then(({ openSpecialBuffer }) => {
+      openSpecialBuffer(bufferType);
+    });
+  };
+
+  window.openBufferFromMenu = function (filePath) {
+    import('./buffer-menu.js').then(({ openBufferFromMenu }) => {
+      openBufferFromMenu(filePath);
+    });
+  };
+
   window.toggleBacklinks = function () {
     document.getElementById('backlinks-panel').classList.toggle('collapsed');
   };
@@ -246,20 +265,17 @@ export function setupWindowHandlers() {
       const messageEl = document.getElementById('auth-banner-message');
       messageEl.textContent = 'Google authentication required. Please reconnect your account.';
       banner.classList.remove('hidden');
-      // Disable tabs
-      document.getElementById('calendar-tab-btn').disabled = true;
-      document.getElementById('email-tab-btn').disabled = true;
-      // Switch back to writer
-      document.querySelector('.tab-btn[data-tab="writer"]').click();
     }
   };
 
   // Import file operations for window bindings
-  import('./file-manager.js').then(({ saveBufferAsFile, deleteCurrentFile, renameCurrentFile, createNewFile }) => {
+  import('./file-manager.js').then(({ saveBufferAsFile, deleteCurrentFile, renameCurrentFile, createNewFile, switchToBuffer, closeBuffer }) => {
     window.saveBufferAsFile = saveBufferAsFile;
     window.deleteCurrentFile = deleteCurrentFile;
     window.renameCurrentFile = renameCurrentFile;
     window.createNewFile = createNewFile;
+    window.switchToBuffer = switchToBuffer;
+    window.closeBuffer = closeBuffer;
   });
 
   // Import agenda for window binding
