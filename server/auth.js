@@ -34,12 +34,6 @@ function isRateLimited(ip) {
 function authMiddleware(req, res, next) {
   const googleAuth = req.app.locals.googleAuth;
   
-  // Test mode: auto-authenticate
-  if (process.env.TEST_MODE === 'true' && !req.session.authenticated) {
-    req.session.authenticated = true;
-    req.session.userInfo = { email: 'test@test.com', name: 'Test' };
-  }
-  
   // Check if authenticated via session
   if (req.session && req.session.authenticated) {
     const userInfo = req.session.userInfo;
