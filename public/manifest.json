@@ -1,7 +1,7 @@
 {
-  "name": "H3LPeR - Journal & Productivity",
+  "name": "H3LPeR - Public Whiteboard",
   "short_name": "H3LPeR",
-  "description": "Personal journal with calendar, tasks, and email integration",
+  "description": "Public whiteboard with weather, news, research, and astronomy",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1e1e1e",
