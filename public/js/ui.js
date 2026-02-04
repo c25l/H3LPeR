@@ -255,11 +255,6 @@ export function setupWindowHandlers() {
     window.closeBuffer = closeBuffer;
   });
 
-  // Import agenda for window binding
-  import('./agenda.js').then(({ addTodayAgendaFromCalendar }) => {
-    window.addTodayAgendaFromCalendar = addTodayAgendaFromCalendar;
-  });
-
   // Import conflict resolution for window binding
   import('./conflict-manager.js').then(({ resolveConflict }) => {
     window.resolveConflict = function (choice) {
