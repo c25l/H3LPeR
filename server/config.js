@@ -4,21 +4,14 @@ const path = require('path');
 const configPath = path.join(__dirname, '..', 'config.json');
 
 function loadConfig() {
-  if (!fs.existsSync(configPath)) {
-    throw new Error('config.json not found. Please create it from config.json.example');
-  }
-
-  const raw = fs.readFileSync(configPath, 'utf-8');
-  const config = JSON.parse(raw);
-
-  // Resolve vault path to absolute
-  if (!path.isAbsolute(config.vaultPath)) {
-    config.vaultPath = path.resolve(__dirname, '..', config.vaultPath);
-  }
-
-  // Ensure vault directory exists
-  if (!fs.existsSync(config.vaultPath)) {
-    fs.mkdirSync(config.vaultPath, { recursive: true });
+  let config = {
+    port: 3000,
+    sessionSecret: 'default-secret-change-me'
+  };
+  
+  if (fs.existsSync(configPath)) {
+    const raw = fs.readFileSync(configPath, 'utf-8');
+    config = { ...config, ...JSON.parse(raw) };
   }
 
   return config;
